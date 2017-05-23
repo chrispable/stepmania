@@ -725,15 +725,13 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 	if( m_aBGChanges.size() == 0 )
 		return;
 
-	TimingData::GetBeatArgs beat_info;
-	beat_info.elapsed_time= fCurrentTime;
-	pSong->m_SongTiming.GetBeatAndBPSFromElapsedTime(beat_info);
+	float curr_beat= pSong->m_SongTiming.GetBeatFromElapsedTime(fCurrentTime);
 
 	// Calls to Update() should *not* be scaled by music rate; fCurrentTime is. Undo it.
 	const float fRate = GAMESTATE->m_SongOptions.GetCurrent().m_fMusicRate;
 
 	// Find the BGSegment we're in
-	const int i = FindBGSegmentForBeat(beat_info.beat);
+	const int i = FindBGSegmentForBeat(curr_beat);
 
 	float fDeltaTime = fCurrentTime - fLastMusicSeconds;
 	if( i != -1  &&  i != m_iCurBGChangeIndex )	// we're changing backgrounds
@@ -750,7 +748,7 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 
 		m_pFadingBGA = m_pCurrentBGA;
 
-		map<BackgroundDef,Actor*>::const_iterator iter = m_BGAnimations.find( change.m_def );
+		auto iter = m_BGAnimations.find( change.m_def );
 		if( iter == m_BGAnimations.end() )
 		{
 			XNode *pNode = change.m_def.CreateNode();
@@ -765,7 +763,7 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 
 		if( m_pFadingBGA == m_pCurrentBGA )
 		{
-			m_pFadingBGA = NULL;
+			m_pFadingBGA = nullptr;
 			//LOG->Trace( "bg didn't actually change.  Ignoring." );
 		}
 		else
@@ -773,10 +771,10 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 			if( m_pFadingBGA )
 			{
 				m_pFadingBGA->PlayCommand( "LoseFocus" );
-				
+
 				if( !change.m_sTransition.empty() )
 				{
-					map<RString,BackgroundTransition>::const_iterator lIter = mapNameToTransition.find( change.m_sTransition );
+					auto lIter = mapNameToTransition.find( change.m_sTransition );
 					if(lIter == mapNameToTransition.end())
 					{
 						LuaHelpers::ReportScriptErrorFmt("'%s' is not the name of a BackgroundTransition file.", change.m_sTransition.c_str());
@@ -807,11 +805,11 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 	if( m_pFadingBGA )
 	{
 		if( m_pFadingBGA->GetTweenTimeLeft() == 0 )
-			m_pFadingBGA = NULL;
+			m_pFadingBGA = nullptr;
 	}
 
 	/* This is unaffected by the music rate. */
-	float fDeltaTimeNoMusicRate = max( fDeltaTime / fRate, 0 );
+	float fDeltaTimeNoMusicRate = std::max( fDeltaTime / fRate, 0.f );
 
 	if( m_pCurrentBGA )
 		m_pCurrentBGA->Update( fDeltaTimeNoMusicRate );

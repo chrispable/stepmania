@@ -739,10 +739,10 @@ class DebugLineHalt : public IDebugLine
 class DebugLineLightsDebug : public IDebugLine
 {
 	virtual RString GetDisplayTitle() { return LIGHTS_DEBUG.GetValue(); }
-	virtual bool IsEnabled() { return PREFSMAN->m_bDebugLights.Get(); }
+	virtual bool IsEnabled() { return PREFSMAN->m_bDebugLights; }
 	virtual void DoAndLog( RString &sMessageOut )
 	{
-		PREFSMAN->m_bDebugLights.Set( !PREFSMAN->m_bDebugLights );
+		PREFSMAN->m_bDebugLights= !PREFSMAN->m_bDebugLights;
 		IDebugLine::DoAndLog( sMessageOut );
 	}
 };

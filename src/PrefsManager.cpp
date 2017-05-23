@@ -166,6 +166,7 @@ PrefsManager::PrefsManager() :
 	m_sDefaultModifiers		( "DefaultModifiers",		"" ),
 
 	m_bWindowed			( "Windowed",			true ),
+	m_sDisplayId			( "DisplayId", "" ),
 	m_iDisplayWidth			( "DisplayWidth",		854 ),
 	m_iDisplayHeight		( "DisplayHeight",		480 ),
 	m_fDisplayAspectRatio		( "DisplayAspectRatio",		16/9.f, ValidateDisplayAspectRatio ),
@@ -178,6 +179,7 @@ PrefsManager::PrefsManager() :
 	m_iMaxTextureResolution		( "MaxTextureResolution",	2048 ),
 	m_iRefreshRate			( "RefreshRate",		REFRESH_DEFAULT ),
 	m_bAllowMultitexture		( "AllowMultitexture",		true ),
+	m_bFullscreenIsBorderlessWindow( "FullscreenIsBorderlessWindow", false ),
 	m_bShowStats			( "ShowStats",			TRUE_IF_DEBUG),
 	m_bShowBanners			( "ShowBanners",		true ),
 	m_bShowMouseCursor		( "ShowMouseCursor",		true ),
@@ -272,6 +274,7 @@ PrefsManager::PrefsManager() :
 	m_bAnisotropicFiltering		( "AnisotropicFiltering",		false ),
 
 	m_bSignProfileData		( "SignProfileData",			false ),
+	m_WarnOnNoProfile("WarnOnNoProfile", true),
 	m_CourseSortOrder		( "CourseSortOrder",			COURSE_SORT_SONGS ),
 	m_bSubSortByNumSteps		( "SubSortByNumSteps",			false ),
 	m_GetRankingName		( "GetRankingName",			RANKING_ON ),
@@ -290,7 +293,7 @@ PrefsManager::PrefsManager() :
 	m_bThreadedInput		( "ThreadedInput",			true ),
 	m_bThreadedMovieDecode		( "ThreadedMovieDecode",		true ),
 	m_sTestInitialScreen		( "TestInitialScreen",			"" ),
-	m_bDebugLights			( "DebugLights",			false ),
+	m_bDebugLights(false),
 	m_bMonkeyInput			( "MonkeyInput",			false ),
 	m_sMachineName			( "MachineName",			"" ),
 	m_sCoursesToShowRanking		( "CoursesToShowRanking",		"" ),
@@ -298,6 +301,12 @@ PrefsManager::PrefsManager() :
 	m_bAllowSongDeletion		( "AllowSongDeletion",			false ),
 
 	m_bQuirksMode			( "QuirksMode",		false ),
+
+	m_custom_songs_enable("CustomSongsEnable", false),
+	m_custom_songs_max_count("CustomSongsMaxCount", 1000), // No limit. -- 2 Unlimited
+	m_custom_songs_load_timeout("CustomSongsLoadTimeout", 5.f),
+	m_custom_songs_max_seconds("CustomSongsMaxSeconds", 120.f),
+	m_custom_songs_max_megabytes("CustomSongsMaxMegabytes", 5.f),
 
 	/* Debug: */
 	m_bLogToDisk			( "LogToDisk",		true ),

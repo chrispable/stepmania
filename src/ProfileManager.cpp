@@ -187,7 +187,19 @@ ProfileLoadResult ProfileManager::LoadProfile( PlayerNumber pn, RString sProfile
 		}
 	}
 
-	LOG->Trace( "Done loading profile - result %d", lr );
+
+	if(lr == ProfileLoadResult_Success)
+	{
+		Profile* prof= GetProfile(pn);
+		if(prof->m_sDisplayName.empty())
+		{
+			prof->m_sDisplayName= PlayerNumberToLocalizedString(pn);
+		}
+		prof->LoadCustomFunction(sProfileDir, pn);
+		prof->LoadSongsFromDir(sProfileDir, ProfileSlot(pn));
+	}
+
+	LOG->Trace("Done loading profile - result %d", int(lr));
 
 	return lr;
 }
@@ -211,8 +223,8 @@ bool ProfileManager::LoadLocalProfileFromMachine( PlayerNumber pn )
 		return false;
 	}
 
-	GetProfile(pn)->LoadCustomFunction( m_sProfileDir[pn] );
-	
+
+	GetProfile(pn)->LoadCustomFunction(m_sProfileDir[pn], pn);
 	return true;
 }
 
@@ -345,7 +357,7 @@ bool ProfileManager::SaveProfile( PlayerNumber pn ) const
 		Profile::MoveBackupToDir( m_sProfileDir[pn], sBackupDir );
 	}
 
-	bool b = GetProfile(pn)->SaveAllToDir( m_sProfileDir[pn], PREFSMAN->m_bSignProfileData );
+	bool b = GetProfile(pn)->SaveAllToDir(m_sProfileDir[pn], PREFSMAN->m_bSignProfileData, pn);
 
 	return b;
 }
@@ -353,9 +365,10 @@ bool ProfileManager::SaveProfile( PlayerNumber pn ) const
 bool ProfileManager::SaveLocalProfile( RString sProfileID )
 {
 	const Profile *pProfile = GetLocalProfile( sProfileID );
-	ASSERT( pProfile != NULL );
+	ASSERT( pProfile != nullptr );
 	RString sDir = LocalProfileIDToDir( sProfileID );
-	bool b = pProfile->SaveAllToDir( sDir, PREFSMAN->m_bSignProfileData );
+	bool b = pProfile->SaveAllToDir(sDir, PREFSMAN->m_bSignProfileData, PlayerNumber_Invalid);
+
 	return b;
 }
 
@@ -535,8 +548,9 @@ bool ProfileManager::CreateLocalProfile( RString sName, RString &sProfileIDOut )
 	pProfile->m_sCharacterID = CHARMAN->GetRandomCharacter()->m_sCharacterID;
 
 	// Save it to disk.
+
 	RString sProfileDir = LocalProfileIDToDir(profile_id);
-	if( !pProfile->SaveAllToDir(sProfileDir, PREFSMAN->m_bSignProfileData) )
+	if(!pProfile->SaveAllToDir(sProfileDir, PREFSMAN->m_bSignProfileData, PlayerNumber_Invalid))
 	{
 		delete pProfile;
 		sProfileIDOut = "";
@@ -596,7 +610,7 @@ bool ProfileManager::RenameLocalProfile( RString sProfileID, RString sNewName )
 	pProfile->m_sDisplayName = sNewName;
 
 	RString sProfileDir = LocalProfileIDToDir( sProfileID );
-	return pProfile->SaveAllToDir( sProfileDir, PREFSMAN->m_bSignProfileData );
+	return pProfile->SaveAllToDir(sProfileDir, PREFSMAN->m_bSignProfileData, PlayerNumber_Invalid);
 }
 
 bool ProfileManager::DeleteLocalProfile( RString sProfileID )
@@ -644,7 +658,7 @@ void ProfileManager::SaveMachineProfile() const
 	// are saved, so that the Player's profiles show the right machine name.
 	const_cast<ProfileManager *> (this)->m_pMachineProfile->m_sDisplayName = PREFSMAN->m_sMachineName;
 
-	m_pMachineProfile->SaveAllToDir( MACHINE_PROFILE_DIR, false ); /* don't sign machine profiles */
+	m_pMachineProfile->SaveAllToDir(MACHINE_PROFILE_DIR, false, PlayerNumber_Invalid); /* don't sign machine profiles */
 }
 
 void ProfileManager::LoadMachineProfile()
@@ -653,7 +667,7 @@ void ProfileManager::LoadMachineProfile()
 	if( lr == ProfileLoadResult_FailedNoProfile )
 	{
 		m_pMachineProfile->InitAll();
-		m_pMachineProfile->SaveAllToDir( MACHINE_PROFILE_DIR, false ); /* don't sign machine profiles */
+		m_pMachineProfile->SaveAllToDir(MACHINE_PROFILE_DIR, false, PlayerNumber_Invalid); /* don't sign machine profiles */
 	}
 
 	// If the machine name has changed, make sure we use the new name

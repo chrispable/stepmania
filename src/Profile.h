@@ -14,6 +14,7 @@
 #include "TrailUtil.h"	// for TrailID
 #include "StyleUtil.h"	// for StyleID
 #include "LuaReference.h"
+#include "PlayerNumber.h"
 
 class XNode;
 struct lua_State;
@@ -133,6 +134,8 @@ public:
 			FOREACH_ENUM( RankingCategory,rc )
 				m_CategoryHighScores[st][rc].Init();
 	}
+	~Profile();
+	void ClearSongs();
 
 	// smart accessors
 	RString GetDisplayNameOrHighScoreName() const;
@@ -155,6 +158,17 @@ public:
 	float GetSongsAndCoursesPercentCompleteAllDifficulties( StepsType st ) const;
 	bool GetDefaultModifiers( const Game* pGameType, RString &sModifiersOut ) const;
 	void SetDefaultModifiers( const Game* pGameType, const RString &sModifiers );
+	void get_preferred_noteskin(StepsType stype, RString& skin) const;
+	bool set_preferred_noteskin(StepsType stype, RString const& skin);
+	typedef std::map<StepsType, RString> pref_noteskin_container;
+	pref_noteskin_container const& get_all_preferred_noteskins()
+		{ return m_preferred_noteskins; }
+	LuaReference get_noteskin_params(RString const& skin, StepsType stype) const;
+	void set_noteskin_params(RString const& skin, StepsType stype, LuaReference& params);
+	typedef map<RString, map<StepsType, LuaReference> > noteskin_param_container;
+	noteskin_param_container const& get_all_noteskin_params() const
+		{ return m_noteskin_params; }
+
 	bool IsCodeUnlocked( RString sUnlockEntryID ) const;
 	Song *GetMostPopularSong() const;
 	Course *GetMostPopularCourse() const;
@@ -194,7 +208,12 @@ public:
 	static RString MakeGuid();
 
 	RString m_sGuid;
+	// Probably not a problem if the per-game sections are written to prefs in
+	// random order. -Kyz
 	map<RString,RString> m_sDefaultModifiers;
+	pref_noteskin_container m_preferred_noteskins;
+	noteskin_param_container m_noteskin_params;
+	std::vector<Song*> m_songs;
 	SortOrder m_SortOrder;
 	Difficulty m_LastDifficulty;
 	CourseDifficulty m_LastCourseDifficulty;
@@ -370,15 +389,19 @@ public:
 	// Init'ing
 	void InitAll()
 	{
-		InitEditableData(); 
-		InitGeneralData(); 
-		InitSongScores(); 
-		InitCourseScores(); 
-		InitCategoryScores(); 
-		InitScreenshotData(); 
-		InitCalorieData(); 
+
+		InitEditableData();
+		init_noteskin_params();
+		InitGeneralData();
+		InitSongScores();
+		InitCourseScores();
+		InitCategoryScores();
+		InitScreenshotData();
+		InitCalorieData();
+		ClearSongs();
 	}
-	void InitEditableData(); 
+	void InitEditableData();
+	void init_noteskin_params();
 	void InitGeneralData(); 
 	void InitSongScores(); 
 	void InitCourseScores(); 
@@ -390,14 +413,17 @@ public:
 	void swap(Profile& other);
 
 	// Loading and saving
-	void HandleStatsPrefixChange(RString dir, bool require_signature);
+
+	void HandleStatsPrefixChange( RString dir, bool require_signature );
 	ProfileLoadResult LoadAllFromDir( RString sDir, bool bRequireSignature );
-	ProfileLoadResult LoadStatsFromDir(RString dir, bool require_signature);
+	ProfileLoadResult LoadStatsFromDir( RString dir, bool require_signature );
+	void LoadSongsFromDir(RString const& dir, ProfileSlot prof_slot);
 	void LoadTypeFromDir(RString dir);
-	void LoadCustomFunction( RString sDir );
-	bool SaveAllToDir( RString sDir, bool bSignData ) const;
+	void LoadCustomFunction(RString dir, PlayerNumber pn);
+	bool SaveAllToDir(RString sDir, bool bSignData, PlayerNumber pn) const;
 
 	ProfileLoadResult LoadEditableDataFromDir( RString sDir );
+	void load_noteskin_params_from_dir(RString const& dir);
 	ProfileLoadResult LoadStatsXmlFromNode( const XNode* pNode, bool bIgnoreEditable = true );
 	void LoadGeneralDataFromNode( const XNode* pNode );
 	void LoadSongScoresFromNode( const XNode* pNode );
