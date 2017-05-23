@@ -1393,7 +1393,7 @@ void ScreenGameplay::LoadNextSong()
 			pPlayerSound = m_AutoKeysounds.GetSharedSound();
 		pi->m_SoundEffectControl.SetSoundReader( pPlayerSound );
 	}
-
+	GAMESTATE->HTTPBroadcastSongInProgress();
 	MESSAGEMAN->Broadcast("DoneLoadingNextSong");
 }
 
@@ -2410,7 +2410,14 @@ void ScreenGameplay::AbortGiveUp( bool bShowText )
 	{
 		return;
 	}
+
+	if ( !bShowText )
+	{
+		GAMESTATE->HTTPBroadcastSongInProgress(true);
+	}
+
 	AbortGiveUpText(bShowText);
+	
 	m_GiveUpTimer.SetZero();
 }
 
@@ -2638,6 +2645,7 @@ void ScreenGameplay::SongFinished()
 	/* Extremely important: if we don't remove attacks before moving on to the next
 	 * screen, they'll still be turned on eventually. */
 	GAMESTATE->RemoveAllActiveAttacks();
+	GAMESTATE->HTTPBroadcastSongInProgress(true);
 	FOREACH_VisiblePlayerInfo( m_vPlayerInfo, pi )
 		pi->m_pActiveAttackList->Refresh();
 }

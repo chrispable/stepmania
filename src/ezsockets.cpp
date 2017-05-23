@@ -70,6 +70,12 @@ EzSockets::~EzSockets()
 	delete times;
 }
 
+void EzSockets::setTimeout(int sec, int usec)
+{
+	times->tv_sec = sec;
+	times->tv_usec = usec;
+}
+
 //Check to see if the socket has been created
 bool EzSockets::check()
 {
@@ -122,6 +128,21 @@ bool EzSockets::listen()
 
 	state = skLISTENING;
 	return true;
+}
+
+void EzSockets::setBlocking(bool b)
+{
+	#if defined(WIN32)
+	u_long iMode = 0;
+	if (!b)	iMode=1;
+	ioctlsocket(sock, FIONBIO, &iMode);
+	#else
+	const int flags = fcntl(sock, F_GETFL, 0);
+    if ((flags & O_NONBLOCK) && !b) { return; }
+    if (!(flags & O_NONBLOCK) && b) { return; }
+    fcntl(sock, F_SETFL, (b ? flags ^ O_NONBLOCK : flags | O_NONBLOCK));
+	#endif
+	blocking=b;
 }
 
 #if defined(WIN32)

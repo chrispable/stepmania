@@ -142,6 +142,29 @@ void MsdFile::ReadBuf( const char *buf, int len, bool bUnescape )
 	delete [] cProcessed;
 }
 
+//static helper for other features
+RString MsdFile::ReadFileIntoString(RString sNewPath)
+{
+	RageFile f;
+	/* Open file. */
+	if( !f.Open( sNewPath ) )
+	{
+		return NULL;
+	}
+
+	// allocate a string to hold the file
+	RString FileString;
+	FileString.reserve( f.GetFileSize() );
+
+	int iBytesRead = f.Read( FileString );
+	if( iBytesRead == -1 )
+	{
+		return NULL;
+	}
+	return FileString;
+
+}
+
 // returns true if successful, false otherwise
 bool MsdFile::ReadFile( RString sNewPath, bool bUnescape )
 {

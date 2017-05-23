@@ -41,6 +41,9 @@ public:
 	bool create(int Protocol);
 	bool create(int Protocol, int Type);
 
+	//set socket timeout
+	void setTimeout(int sec, int usec);
+
 	//Bind Socket to local port
 	bool bind(unsigned short port);
 
@@ -86,6 +89,8 @@ public:
 	void SendStr(const string& data, char delim = '\0');
 	int ReadStr(string& data, char delim = '\0');
 	int PeekStr(string& data, char delim = '\0');
+
+	void setBlocking(bool b=true);
 
 
 	//Operators
