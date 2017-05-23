@@ -20,6 +20,23 @@ class RageFileDriver;
 /** @brief Get the length of the array. */
 #define ARRAYLEN(a) (sizeof(a) / sizeof((a)[0]))
 
+
+//legacy printf define
+#if defined(__GNUC__)
+/** @brief Define a macro to tell the compiler that a function has printf()
+ * semantics, to aid warning output. */
+#define PRINTF(a,b) __attribute__((format(__printf__,a,b)))
+#define CONST_FUNCTION __attribute__((const))
+#else
+/** @brief A dummy define to keep things going smoothly. */
+#define PRINTF(a,b)
+/** @brief A dummy define to keep things going smoothly. */
+#define CONST_FUNCTION
+#endif
+// end legacy printf define
+
+
+
 /* Common harmless mismatches.  All min(T,T) and max(T,T) cases are handled
  * by the generic template we get from <algorithm>. */
 inline float min( float a, int b ) { return a < b? a:b; }
@@ -50,6 +67,10 @@ inline U lerp( T x, U l, U h )
 	return U(x * (h - l) + l);
 }
 
+extern const RString CUSTOM_SONG_PATH;
+
+// TODO: Rename this to TryClamp or something a little more accurate
+// so as to not be confusing.
 template<typename T, typename U, typename V>
 inline bool CLAMP(T& x, U l, V h)
 {
@@ -376,7 +397,9 @@ RString ConvertI64FormatString( const RString &sStr );
  * If Path is a directory (eg. c:\games\stepmania"), append a slash so the last
  * element will end up in Dir, not FName: "c:\games\stepmania\".
  * */
+
 void splitpath( const RString &Path, RString &Dir, RString &Filename, RString &Ext );
+RString custom_songify_path(RString const& path);
 
 RString SetExtension( const RString &path, const RString &ext );
 RString GetExtension( const RString &sPath );
@@ -522,7 +545,7 @@ void Trim( RString &sStr, const char *szTrim = "\r\n\t " );
 void StripCrnl( RString &sStr );
 bool BeginsWith( const RString &sTestThis, const RString &sBeginning );
 bool EndsWith( const RString &sTestThis, const RString &sEnding );
-RString URLEncode( const RString &sStr, bool force=false );
+RString URLEncode( const RString &sStr );
 
 void StripCvsAndSvn( vector<RString> &vs ); // Removes various versioning system metafolders.
 void StripMacResourceForks( vector<RString> &vs ); // Removes files starting with "._"

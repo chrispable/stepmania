@@ -88,6 +88,7 @@ namespace LuaHelpers
 	template<> bool FromStack<bool>( Lua *L, bool &Object, int iOffset ) { Object = !!lua_toboolean( L, iOffset ); return true; }
 	template<> bool FromStack<float>( Lua *L, float &Object, int iOffset ) { Object = (float)lua_tonumber( L, iOffset ); return true; }
 	template<> bool FromStack<int>( Lua *L, int &Object, int iOffset ) { Object = lua_tointeger( L, iOffset ); return true; }
+	template<> bool FromStack<unsigned int>(Lua* L, unsigned int& object, int offset){object = lua_tointeger(L, offset);return true;}
 	template<> bool FromStack<RString>( Lua *L, RString &Object, int iOffset )
 	{
 		size_t iLen;

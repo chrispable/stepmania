@@ -1035,7 +1035,7 @@ bool PlayerOptions::operator==( const PlayerOptions &other ) const
 	// manager forces lowercase, but some obscure part of PlayerOptions
 	// uppercases the first letter.  The previous code that used != probably
 	// relied on RString::operator!= misbehaving. -Kyz
-	if(strcasecmp(m_sNoteSkin, other.m_sNoteSkin) != 0)
+	if(m_sNoteSkin.CompareNoCase(other.m_sNoteSkin) != 0)
 	{
 		return false;
 	}

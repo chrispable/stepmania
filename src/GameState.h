@@ -249,10 +249,14 @@ public:
 	bool		m_bLoadingNextSong;
 	int		GetLoadingCourseSongIndex() const;
 
+	int prepare_song_for_gameplay();
+
 	// State Info used during gameplay
 
 	// NULL on ScreenSelectMusic if the currently selected wheel item isn't a Song.
 	BroadcastOnChangePtr<Song>	m_pCurSong;
+	void set_curr_song(Song* new_song);
+	Song* get_curr_song() const;
 	// The last Song that the user manually changed to.
 	Song*		m_pPreferredSong;
 	BroadcastOnChangePtr1D<Steps,NUM_PLAYERS> m_pCurSteps;
@@ -283,6 +287,13 @@ public:
 
 	bool AllAreInDangerOrWorse() const;
 	bool OneIsHot() const;
+
+	// Haste
+	// The haste rate calculated by ScreenGameplay needs to be in GameState
+	// so that PlayerOptions can use it when scaling approach speeds by the
+	// current music rate. -Kyz
+	float m_haste_rate;
+	float get_hasted_music_rate();
 
 	// Haste
 	float	m_fHasteRate; // [-1,+1]; 0 = normal speed

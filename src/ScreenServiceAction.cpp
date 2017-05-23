@@ -121,7 +121,7 @@ static RString TransferStatsMachineToMemoryCard()
 	RString sDir = MEM_CARD_MOUNT_POINT[pn];
 	sDir += "MachineProfile/";
 
-	bool bSaved = PROFILEMAN->GetMachineProfile()->SaveAllToDir( sDir, PREFSMAN->m_bSignProfileData );
+	bool bSaved = PROFILEMAN->GetMachineProfile()->SaveAllToDir(sDir, PREFSMAN->m_bSignProfileData, PlayerNumber_Invalid);
 
 	MEMCARDMAN->UnmountCard(pn);
 

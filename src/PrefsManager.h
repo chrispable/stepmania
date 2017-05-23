@@ -158,6 +158,8 @@ protected:
 
 public:
 	Preference<bool>	m_bWindowed;
+	Preference<RString>	m_sDisplayId;
+	
 	Preference<int>	m_iDisplayWidth;
 	Preference<int>	m_iDisplayHeight;
 	Preference<float>	m_fDisplayAspectRatio;
@@ -170,6 +172,7 @@ public:
 	Preference<int>	m_iMaxTextureResolution;
 	Preference<int>	m_iRefreshRate;
 	Preference<bool>	m_bAllowMultitexture;
+	Preference<bool> m_bFullscreenIsBorderlessWindow;
 	Preference<bool>	m_bShowStats;
 	Preference<bool>	m_bShowBanners;
 	Preference<bool>	m_bShowMouseCursor;
@@ -275,6 +278,7 @@ public:
 	// on different machines that don't have the same key, or else the
 	// profile's data will be discarded.
 	Preference<bool>	m_bSignProfileData;
+	Preference<bool>	m_WarnOnNoProfile;
 
 	// course ranking
 	Preference<CourseSortOrders>	m_CourseSortOrder;
@@ -299,7 +303,7 @@ public:
 	Preference<bool>	m_bThreadedInput;
 	Preference<bool>	m_bThreadedMovieDecode;
 	Preference<RString>	m_sTestInitialScreen;
-	Preference<bool>	m_bDebugLights;
+	bool m_bDebugLights;
 	Preference<bool>	m_bMonkeyInput;
 	Preference<RString>	m_sMachineName;
 	Preference<RString>	m_sCoursesToShowRanking;
@@ -308,6 +312,12 @@ public:
 
 	/** @brief Enable some quirky behavior used by some older versions of StepMania. */
 	Preference<bool>	m_bQuirksMode;
+
+	Preference<bool> m_custom_songs_enable;
+	Preference<unsigned int> m_custom_songs_max_count;
+	Preference<float> m_custom_songs_load_timeout;
+	Preference<float> m_custom_songs_max_seconds;
+	Preference<float> m_custom_songs_max_megabytes;
 
 	// Debug:
 	Preference<bool>	m_bLogToDisk;
