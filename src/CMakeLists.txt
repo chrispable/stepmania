@@ -22,6 +22,7 @@ endif()
 # Main project is below.
 
 include(CMakeData-arch.cmake)
+include(CMakeData-io.cmake)
 include(CMakeData-rage.cmake)
 include(CMakeData-os.cmake)
 include(CMakeData-actor.cmake)
@@ -42,6 +43,7 @@ list(APPEND SMDATA_ALL_FILES_SRC
   ${SMDATA_ALL_SCREENS_SRC}
   ${SMDATA_OS_SRC}
   ${SMDATA_FILE_TYPES_SRC}
+  ${SMDATA_IO_SRC}
 )
 list(APPEND SMDATA_ALL_FILES_HPP
   ${SMDATA_GLOBAL_FILES_HPP}
@@ -53,6 +55,7 @@ list(APPEND SMDATA_ALL_FILES_HPP
   ${SMDATA_ALL_SCREENS_HPP}
   ${SMDATA_OS_HPP}
   ${SMDATA_FILE_TYPES_HPP}
+  ${SMDATA_IO_HPP}
 )
 
 if(NOT APPLE)
@@ -391,6 +394,7 @@ if (WIN32)
     "${LIB_AVCODEC}"
     "${LIB_AVFORMAT}"
     "${LIB_AVUTIL}"
+    "${LIBUSB_WINDOWS_LIB}"
   )
 
   if (WITH_OGG)
@@ -417,8 +421,10 @@ if (WIN32)
   if (SDL2_FOUND)
     sm_add_link_flag("${SM_EXE_NAME}" "/LIBPATH:\"${SDL2_LIBRARY}\"")
   endif()
+  
   sm_add_link_flag("${SM_EXE_NAME}" "/LIBPATH:\"${DIRECTX_LIBRARY_DIR}\"")
   sm_add_link_flag("${SM_EXE_NAME}" "/LIBPATH:\"${SM_EXTERN_DIR}/ffmpeg/lib\"")
+  sm_add_link_flag("${SM_EXE_NAME}" "/LIBPATH:\"${SM_EXTERN_DIR}/libusb/lib/msvc\"")
   sm_add_link_flag("${SM_EXE_NAME}" "/LIBPATH:\"${SM_SRC_DIR}/archutils/Win32/ddk\"")
   sm_add_link_flag("${SM_EXE_NAME}" "/ERRORREPORT:SEND")
   sm_add_link_flag("${SM_EXE_NAME}" "/MAPINFO:EXPORTS")
@@ -476,6 +482,12 @@ elseif(APPLE)
   if(SDL2_FOUND)
     list(APPEND SMDATA_LINK_LIB ${SDL2_LIBRARY})
     sm_add_compile_definition("${SM_EXE_NAME}" HAVE_SDL)
+  endif()
+  
+  if(LibUSB_FOUND)
+	list(APPEND SMDATA_LINK_LIB
+	"${LibUSB_LIBRARIES}"
+	)
   endif()
 else() # Unix / Linux
   # TODO: Remember to find and locate the zip archive files.
@@ -570,6 +582,12 @@ else() # Unix / Linux
     ${XRANDR_LIBRARIES}
     ${XINERAMA_LIBRARIES}
   )
+  
+  if(LibUSB_FOUND)
+	list(APPEND SMDATA_LINK_LIB
+	"${LibUSB_LIBRARIES}"
+	)
+  endif()
 
   list(REMOVE_ITEM SMDATA_LINK_LIB "zlib")
 endif()
@@ -586,6 +604,20 @@ list(APPEND SM_INCLUDE_DIRS
   "${SM_EXTERN_DIR}/cppformat"
   "${SM_EXTERN_DIR}/enum-flags/"
 )
+
+if(WIN32)
+	list(APPEND SM_INCLUDE_DIRS
+		"${SM_EXTERN_DIR}/libusb/include"
+	)
+else()
+	if(LibUSB_FOUND)
+		list(APPEND SM_INCLUDE_DIRS
+			"${LibUSB_INCLUDE_DIRS}"
+		)
+	endif()
+endif()
+
+
 if(NOT APPLE)
   list(APPEND SM_INCLUDE_DIRS
     "${SM_EXTERN_DIR}/glew-1.5.8/include"
@@ -635,6 +667,9 @@ if(NOT APPLE)
     if (DL_FOUND)
       list(APPEND SM_INCLUDE_DIRS "${DL_INCLUDE_DIR}")
     endif()
+    if (LibUSB_FOUND)
+		list(APPEND SM_INCLUDE_DIRS "${LibUSB_INCLUDE_DIRS}")
+    endif()
   endif()
 else()
   if(WITH_OGG)
@@ -653,6 +688,9 @@ else()
       "${SM_FFMPEG_SRC_DIR}"
       "${SM_FFMPEG_ROOT}"
     )
+  endif()
+  if (LIBUSB_FOUND)
+	list(APPEND SM_INCLUDE_DIRS "${LIBUSB_INCLUDE_DIR}")
   endif()
 endif()
 
