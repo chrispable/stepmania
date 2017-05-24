@@ -46,7 +46,16 @@
 #include <ctime>
 #include <set>
 
+#include "NetworkSyncManager.h"
+#include "MsdFile.h"
+
+//dont include this if we dont have networking
+#if !defined(WITHOUT_NETWORKING)
+#include "HTTPHelper.h"
+#endif
+
 GameState*	GAMESTATE = NULL;	// global and accessible from anywhere in our program
+static Preference<RString> pSongBroadcastURL("SongBroadcastURL", "");
 
 #define NAME_BLACKLIST_FILE "/Data/NamesBlacklist.txt"
 
@@ -175,6 +184,14 @@ GameState::GameState() :
 
 	sExpandedSectionName = "";
 
+	//DUMB but if I don't do it this way, it crashes. Gotta have a private member instead of a preference	
+	m_sSongBroadcastURL.assign(pSongBroadcastURL.Get().c_str());
+	
+	//allocate networking variables
+	#if !defined(WITHOUT_NETWORKING)
+		m_SongBroadcastHTTP = new HTTPHelper();
+	#endif
+
 	// Don't reset yet; let the first screen do it, so we can use PREFSMAN and THEME.
 	//Reset();
 
@@ -201,6 +218,12 @@ GameState::~GameState()
 	SAFE_DELETE( m_Environment );
 	SAFE_DELETE( g_pImpl );
 	SAFE_DELETE( processedTiming );
+
+//destroy network variables
+	#if !defined(WITHOUT_NETWORKING)
+		m_SongBroadcastHTTP->GetThreadedResult(); //waits for last call to finish or timeout before destroying object
+		SAFE_DELETE( m_SongBroadcastHTTP );
+	#endif
 }
 
 PlayerNumber GameState::GetMasterPlayerNumber() const
@@ -558,6 +581,44 @@ int GameState::GetCoinsNeededToJoin() const
 		iCoinsToCharge = 0;
 
 	return iCoinsToCharge;
+}
+
+void GameState::HTTPBroadcastSongInProgress( bool bNoSong )
+{
+
+	//if we have networking
+	#if !defined(WITHOUT_NETWORKING)
+	//and we have a broadcast URL...
+	if (m_sSongBroadcastURL.length()>3)
+	{
+		RString sTitle = "";
+		RString sArtist ="";
+		RString sDir = "";
+		RString sMD5Sum = "";
+		RString sMachineGUID = URLEncode(PROFILEMAN->GetMachineProfile()->m_sGuid);
+		RString sEventMode = "0";
+		if (GAMESTATE->IsEventMode()) sEventMode = "1";
+
+		if (!bNoSong)
+		{
+			Song* pSong = GAMESTATE->m_pCurSong;
+			sTitle = URLEncode(pSong->GetTranslitFullTitle(),true);
+			sArtist = URLEncode(pSong->GetDisplayArtist(),true);
+			sDir = (URLEncode(pSong->GetSongDir()));
+			sMD5Sum = MsdFile::ReadFileIntoString(pSong->GetSongFilePath());
+			if(sMD5Sum==NULL)
+			{
+				sMD5Sum=sDir;
+				sMD5Sum.append(sMachineGUID);
+			}
+			sMD5Sum= URLEncode(NSMAN->MD5Hex(sMD5Sum));
+		}
+		
+		
+		RString sDataToSend="machineguid="+sMachineGUID+"&path="+sDir+"&smfilemd5="+sMD5Sum+"&title="+sTitle+"&artist="+sArtist+"&eventmode="+sEventMode+"";
+		m_SongBroadcastHTTP->Threaded_SubmitPostRequest(m_sSongBroadcastURL, sDataToSend);
+	}
+	#endif
 }
 
 /* Game flow:
