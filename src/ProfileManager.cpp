@@ -891,7 +891,7 @@ void ProfileManager::AddStepsScore( const Song* pSong, const Steps* pSteps, Play
 	//if we have networking
 	#if !defined(WITHOUT_NETWORKING)
 	// anonymous profiles keep generating guids and polluting the database, higher collission potential. Require a USB for score to broadcast
-	if( PROFILEMAN->ProfileWasLoadedFromMemoryCard(pn) ) 
+	if(m_sScoreBroadcastURL.length()>3  ) 
 	{
 		if( !pSteps->IsAPlayerEdit() )//&& !pSong->IsCustomSong() )
 		{
@@ -942,7 +942,8 @@ void ProfileManager::AddStepsScore( const Song* pSong, const Steps* pSteps, Play
 
 			RString sPlayerGUID =  "0";
 
-			if( pProfile )
+			//if we have a valid profile and it was loaded from usb, populate player guid
+			if( pProfile && PROFILEMAN->ProfileWasLoadedFromMemoryCard(pn))
 			{
 				sPlayerGUID =  URLEncode(PROFILEMAN->GetProfile(pn)->m_sGuid);
 			}
@@ -960,17 +961,14 @@ void ProfileManager::AddStepsScore( const Song* pSong, const Steps* pSteps, Play
 			}
 			sMD5Sum= URLEncode(NSMAN->MD5Hex(sMD5Sum));
 
-			RString sDataToSend="machineguid="+sMachineGUID+"&path="+sDir+"&smfilemd5="+sMD5Sum+"&title="+sTitle+"&artist="+sArtist+"&playerguid="+sPlayerGUID+"&eventmode="+sEventMode+"&difficulty="+sDifficulty+"&steptype="+sStepType+"&name="+sHSName+"&score="+sScore+"&percent="+sPercent+"&grade="+sGrade+"";
+			RString sDataToSend="machineguid="+sMachineGUID+"&path="+sDir+"&sscfilemd5="+sMD5Sum+"&title="+sTitle+"&artist="+sArtist+"&playerguid="+sPlayerGUID+"&eventmode="+sEventMode+"&difficulty="+sDifficulty+"&steptype="+sStepType+"&name="+sHSName+"&score="+sScore+"&percent="+sPercent+"&grade="+sGrade+"";
 			//LOG->Info("ProfileManager::AddStepsScore Want to send %s to %s",sDataToSend.c_str(), m_sScoreBroadcastURL.c_str());
 		
-			//and we have a broadcast URL...
-			if (m_sScoreBroadcastURL.length()>3)
-			{
+			
 				m_ScoreBroadcastHTTP->Threaded_SubmitPostRequest(m_sScoreBroadcastURL, sDataToSend);
 				//LOG->Info("ProfileManager::AddStepsScore sent!!");
 				//RString res = m_ScoreBroadcastHTTP->GetThreadedResult();
 				//LOG->Info("ProfileManager::AddStepsScore res: %s",res.c_str());
-			}
 		
 		
 		}
