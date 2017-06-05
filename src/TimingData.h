@@ -15,7 +15,7 @@ template<class T>
 inline T ToDerived( const TimingSegment *t, TimingSegmentType tst )
 {
 	ASSERT_M( t && tst == t->GetType(),
-		fmt::sprintf("type mismatch (expected %s, got %s)",
+		sprintf("type mismatch (expected %s, got %s)",
 		TimingSegmentTypeToString(tst).c_str(),
 		TimingSegmentTypeToString(t->GetType()).c_str() ) );
 
@@ -103,7 +103,7 @@ public:
 		start_beat= end_beat;
 			start_second= end_second;
 			start_expand_second= end_expand_second;
-			time_segment= nullptr;
+			time_segment= NULL;
 		}
 	};
 	// displayed_beat_entry is for optimizing GetDisplayedBeat, which is used

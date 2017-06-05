@@ -439,9 +439,10 @@ void MusicWheel::GetSongList( vector<Song*> &arraySongs, SortOrder so )
 		if(GAMESTATE->IsPlayerEnabled(pn))
 		{
 			Profile* prof= PROFILEMAN->GetProfile(pn);
-			for(auto&& song : prof->m_songs)
+			for( unsigned i=0; i<prof->m_songs.size(); i++ )
 			{
-				apAllSongs.push_back(song);
+				Song* pSong = prof->m_songs[i];
+				apAllSongs.push_back(pSong);
 			}
 		}
 	}

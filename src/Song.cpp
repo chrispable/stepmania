@@ -410,11 +410,14 @@ bool Song::LoadFromSongDir(RString sDir, bool load_autosave,
 		}
 		m_pre_customify_song_dir= m_sSongDir;
 		m_sSongDir= custom_songify_path(m_sSongDir);
-		for(auto&& fname : {&m_sBannerFile, &m_sJacketFile, &m_sCDFile,
-					&m_sDiscFile, &m_sLyricsFile, &m_sBackgroundFile, &m_sCDTitleFile})
-		{
-			fname->clear();
-		}
+		//clear anything other than steps and song
+		m_sBannerFile.clear();
+		m_sCDFile.clear();
+		m_sJacketFile.clear();
+		m_sDiscFile.clear();
+		m_sLyricsFile.clear();
+		m_sBackgroundFile.clear();
+		m_sCDTitleFile.clear();
 	}
 
 	FOREACH( Steps*, m_vpSteps, s )
@@ -914,7 +917,10 @@ void Song::TidyUpData( bool from_cache, bool /* duringCache */ )
 			{
 				// find an image with "jacket" or "albumart" in the filename.
 				vector<RString> starts_with(1, "jk_");
-				vector<RString> contains {"jacket", "albumart"};
+				vector<RString> contains;
+				contains.reserve(2);
+				contains.push_back("jacket");
+				contains.push_back("albumart");
 				has_jacket= FindFirstFilenameContaining(image_list,
 					m_sJacketFile, starts_with, contains, empty_list);
 			}
@@ -931,7 +937,10 @@ void Song::TidyUpData( bool from_cache, bool /* duringCache */ )
 			if(!has_disc)
 			{
 				// a rectangular graphic, not to be confused with CDImage above.
-				vector<RString> ends_with {" disc", " title"};
+				vector<RString> ends_with;
+				ends_with.reserve(2);
+				ends_with.push_back(" disc");
+				ends_with.push_back(" title");
 				has_disc= FindFirstFilenameContaining(image_list,
 					m_sDiscFile, empty_list, empty_list, ends_with);
 			}

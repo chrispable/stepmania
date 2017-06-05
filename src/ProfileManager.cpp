@@ -376,7 +376,7 @@ bool ProfileManager::SaveProfile( PlayerNumber pn ) const
 bool ProfileManager::SaveLocalProfile( RString sProfileID )
 {
 	const Profile *pProfile = GetLocalProfile( sProfileID );
-	ASSERT( pProfile != nullptr );
+	ASSERT( pProfile != NULL );
 	RString sDir = LocalProfileIDToDir( sProfileID );
 	bool b = pProfile->SaveAllToDir(sDir, PREFSMAN->m_bSignProfileData, PlayerNumber_Invalid);
 

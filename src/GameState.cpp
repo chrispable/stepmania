@@ -1313,7 +1313,7 @@ void GameState::ResetStageStatistics()
 
 float GameState::get_hasted_music_rate()
 {
-	auto& ops= m_SongOptions.GetCurrent();
+	SongOptions& ops= m_SongOptions.GetCurrent();
 	if(ops.m_fHaste != 0.0f)
 	{
 		return m_haste_rate * ops.m_fMusicRate;
@@ -1495,8 +1495,7 @@ int GameState::GetLoadingCourseSongIndex() const
 	return iIndex;
 }
 
-
-static std::vector<RString> const prepare_song_failures= {
+static const RString prepare_song_failures[] = {
 	"success",
 	"no_current_song",
 	"card_mount_failed",
@@ -1506,7 +1505,7 @@ static std::vector<RString> const prepare_song_failures= {
 int GameState::prepare_song_for_gameplay()
 {
 	Song* curr= get_curr_song();
-	if(curr == nullptr)
+	if(curr == NULL)
 	{
 		return 1;
 	}
@@ -1538,9 +1537,10 @@ int GameState::prepare_song_for_gameplay()
 	copy_exts.push_back("lrc");
 	vector<RString> files_in_dir;
 	FILEMAN->GetDirListingWithMultipleExtensions(from_dir, copy_exts, files_in_dir);
-	for(auto&& fname : files_in_dir)
+	for(int i=0;i<files_in_dir.size();i++)
 	{
-		if(!FileCopy(from_dir + fname, to_dir + fname))
+		
+		if(!FileCopy(from_dir + files_in_dir[i], to_dir + files_in_dir[i]))
 		{
 			return 3;
 		}
@@ -1557,12 +1557,12 @@ Song* GameState::get_curr_song() const
 void GameState::set_curr_song(Song* new_song)
 {
 	Song* curr= m_pCurSong.Get();
-	if(curr != nullptr)
+	if(curr != NULL)
 	{
 		curr->m_SongTiming.ReleaseLookup();
 	}
 	m_pCurSong.Set(new_song);
-	if(new_song != nullptr)
+	if(new_song != NULL)
 	{
 		new_song->m_SongTiming.RequestLookup();
 	}

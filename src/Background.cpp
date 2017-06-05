@@ -748,7 +748,7 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 
 		m_pFadingBGA = m_pCurrentBGA;
 
-		auto iter = m_BGAnimations.find( change.m_def );
+		map<BackgroundDef,Actor*>::const_iterator  iter = m_BGAnimations.find( change.m_def );
 		if( iter == m_BGAnimations.end() )
 		{
 			XNode *pNode = change.m_def.CreateNode();
@@ -763,7 +763,7 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 
 		if( m_pFadingBGA == m_pCurrentBGA )
 		{
-			m_pFadingBGA = nullptr;
+			m_pFadingBGA = NULL;
 			//LOG->Trace( "bg didn't actually change.  Ignoring." );
 		}
 		else
@@ -774,7 +774,7 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 
 				if( !change.m_sTransition.empty() )
 				{
-					auto lIter = mapNameToTransition.find( change.m_sTransition );
+					map<RString,BackgroundTransition>::const_iterator lIter = mapNameToTransition.find( change.m_sTransition );
 					if(lIter == mapNameToTransition.end())
 					{
 						LuaHelpers::ReportScriptErrorFmt("'%s' is not the name of a BackgroundTransition file.", change.m_sTransition.c_str());
@@ -805,7 +805,7 @@ void BackgroundImpl::Layer::UpdateCurBGChange( const Song *pSong, float fLastMus
 	if( m_pFadingBGA )
 	{
 		if( m_pFadingBGA->GetTweenTimeLeft() == 0 )
-			m_pFadingBGA = nullptr;
+			m_pFadingBGA = NULL;
 	}
 
 	/* This is unaffected by the music rate. */

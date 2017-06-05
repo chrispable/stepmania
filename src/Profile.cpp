@@ -85,8 +85,10 @@ void Profile::ClearSongs()
 		return;
 	}
 	Song* gamestate_curr_song= GAMESTATE->m_pCurSong;
-	for(auto&& curr_song : m_songs)
+	for (unsigned int i=0; i< m_songs.size();i++)
+//	for(auto&& curr_song : m_songs)
 	{
+		Song* curr_song = m_songs[i];
 		if(curr_song == gamestate_curr_song)
 		{
 			GAMESTATE->m_pCurSong.Set(NULL);
@@ -1219,7 +1221,7 @@ void Profile::LoadSongsFromDir(RString const& dir, ProfileSlot prof_slot)
 					&& m_songs.size() < PREFSMAN->m_custom_songs_max_count;
 				++song_index)
 		{
-			auto& song_dir_name= song_folders[song_index];
+			RString song_dir_name= song_folders[song_index];
 			Song* new_song= new Song;
 			if(!new_song->LoadFromSongDir(song_dir_name, false, prof_slot))
 			{

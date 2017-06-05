@@ -553,7 +553,7 @@ RageColor SongManager::GetSongGroupColor( const RString &sSongGroup ) const
 	FOREACH_EnabledPlayer(pn)
 	{
 		Profile* prof= PROFILEMAN->GetProfile(pn);
-		if(prof != nullptr)
+		if(prof != NULL)
 		{
 			if(prof->GetDisplayNameOrHighScoreName() == sSongGroup)
 			{
@@ -730,7 +730,7 @@ const vector<Song*> &SongManager::GetSongs( const RString &sGroupName ) const
 	FOREACH_EnabledPlayer(pn)
 	{
 		Profile* prof= PROFILEMAN->GetProfile(pn);
-		if(prof != nullptr)
+		if(prof != NULL)
 		{
 			if(prof->GetDisplayNameOrHighScoreName() == sGroupName)
 			{
