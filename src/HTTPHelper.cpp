@@ -23,7 +23,7 @@ RString HTTPHelper::SubmitPostRequest(const RString &URL, const RString &PostDat
 				wSocket.close();
 				wSocket.create();
 				wSocket.setTimeout(0,250000); //acceptable timeout
-				wSocket.setBlocking(true);
+				//wSocket.setBlocking(false);
 				
 				if( !wSocket.connect( Server, (short) Port ) )
 				{
@@ -44,7 +44,7 @@ RString HTTPHelper::SubmitPostRequest(const RString &URL, const RString &PostDat
 
 				wSocket.SendData( Header.c_str(), Header.length() );
 
-				wSocket.setBlocking(false);
+				//wSocket.setBlocking(true);
 				int BytesGot=0;
 
 				while(1)
@@ -93,9 +93,20 @@ HTTPHelper::~HTTPHelper()
 //Wrapper of function to the submit post request so we can use a mutex on the result
 void HTTPHelper::Threaded_SubmitPostRequest_Thread_Wrapper()
 {
+	usleep(10000000);//10 second sleep
+	uint64_t tid= RageThread::GetCurrentThreadID();
+	char idst[1024];
+	sprintf(idst, "%" PRIu64 "\n", tid);
+	RString ids(idst);
+	LOG->Trace(" in threaded http wrapper for thread id " + ids);
 	m_ResultLock->Lock();
 	_retBuffer=SubmitPostRequest(_URL,_PostData);
 	m_ResultLock->Unlock();
+	tid= RageThread::GetCurrentThreadID();
+	sprintf(idst, "%" PRIu64 "\n", tid);
+	ids=idst;
+	LOG->Trace(" leaving threaded http wrapper for thread id " + ids);
+
 }
 
 //Starts a threaded version of SubmitPostRequest -- Game can continue immediatly
@@ -105,7 +116,25 @@ void HTTPHelper::Threaded_SubmitPostRequest(const RString &myURL, const RString 
 	_URL=myURL;
 	_PostData=myPostData;
 	HTTPThread.SetName("HTTPThread_SubmitPostRequest");
+	uint64_t tid= RageThread::GetCurrentThreadID();
+	char idst[1024];
+		
+	sprintf(idst, "%" PRIu64 "\n", tid);
+	RString ids(idst);
+	LOG->Trace(" about to run create thread on thread id " + ids);
 	HTTPThread.Create(Threaded_SubmitPostRequest_Start, this);
+	tid= RageThread::GetCurrentThreadID();
+	sprintf(idst, "%" PRIu64 "\n", tid);
+	ids=idst;
+	LOG->Trace(" checking if thread was created from thread id " + ids);
+	if (HTTPThread.IsCreated())
+	{
+		LOG->Trace(" thread creation success");
+	}
+	else
+	{
+		LOG->Trace(" thread creation failed");
+	}
 }
 
 //Returns the result stored in an object after the mutex has been released
@@ -148,7 +177,6 @@ bool HTTPHelper::ParseHTTPAddress( const RString &URL, RString &sProto, RString 
 
 	return true;
 }
-
 
 RString HTTPHelper::StripOutContainers( const RString & In )
 {

@@ -28,7 +28,21 @@ public:
 private:
 	static RString HTTPThread_SubmitPostRequest( const RString &URL, const RString &PostData ); // Sends a URL Post Request
 	void Threaded_SubmitPostRequest_Thread_Wrapper(); //wrapper for mutex use
-	static int Threaded_SubmitPostRequest_Start(void *p) { ((HTTPHelper *)p)->Threaded_SubmitPostRequest_Thread_Wrapper(); return 0; };
+	
+	static int Threaded_SubmitPostRequest_Start(void *p) {
+		uint64_t tid= RageThread::GetCurrentThreadID();
+		char idst[1024];
+		
+		sprintf(idst, "%" PRIu64 "\n", tid);
+		RString ids(idst);
+		LOG->Trace("  inside thread profiling of thread " + ids);
+		((HTTPHelper *)p)->Threaded_SubmitPostRequest_Thread_Wrapper(); 
+		tid= RageThread::GetCurrentThreadID();
+		sprintf(idst, "%" PRIu64 "\n", tid);
+		ids=idst;
+		LOG->Trace(" thread " + ids + " should be ending");
+		return 0; 
+	};
 
 	RString _URL;
 	RString _PostData;

@@ -616,7 +616,9 @@ void GameState::HTTPBroadcastSongInProgress( bool bNoSong )
 		
 		
 		RString sDataToSend="machineguid="+sMachineGUID+"&path="+sDir+"&smfilemd5="+sMD5Sum+"&title="+sTitle+"&artist="+sArtist+"&eventmode="+sEventMode+"";
+		CHECKPOINT_M(" broadcasting song start profiling");
 		m_SongBroadcastHTTP->Threaded_SubmitPostRequest(m_sSongBroadcastURL, sDataToSend);
+		CHECKPOINT_M(" broadcasting song stop profiling (should be nearly instant)");
 	}
 	#endif
 }
