@@ -338,8 +338,7 @@ list(APPEND SMDATA_ARCH_LIGHTS_HPP
   "arch/Lights/LightsDriver_EXTIO.h"
 )
 
-# TODO: Confirm if Apple can use the export.
-if(NOT APPLE)
+if(NOT WIN32)
   list(APPEND SMDATA_ARCH_LIGHTS_SRC
     "arch/Lights/LightsDriver_Export.cpp"
   )
@@ -394,7 +393,7 @@ if(NOT APPLE)
       endif()
     endif()
   endif(WIN32)
-endif(NOT APPLE)
+endif(NOT WIN32)
 
 source_group("Arch Specific\\\\Lights" FILES ${SMDATA_ARCH_LIGHTS_SRC} ${SMDATA_ARCH_LIGHTS_HPP})
 
