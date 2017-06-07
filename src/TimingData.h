@@ -15,7 +15,7 @@ template<class T>
 inline T ToDerived( const TimingSegment *t, TimingSegmentType tst )
 {
 	ASSERT_M( t && tst == t->GetType(),
-		sprintf("type mismatch (expected %s, got %s)",
+		ssprintf("type mismatch (expected %s, got %s)",
 		TimingSegmentTypeToString(tst).c_str(),
 		TimingSegmentTypeToString(t->GetType()).c_str() ) );
 
