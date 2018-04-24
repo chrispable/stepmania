@@ -75,6 +75,7 @@ PBProject/Hardware.plist
 .DS_Store
 
 # Visual Studio
+*.sln
 *.pdb
 *.sdf
 *.opensdf
@@ -84,6 +85,9 @@ PBProject/Hardware.plist
 *.map
 *.aps
 *.res
+*.vcxproj
+*.vcxproj.filters
+
 
 # Windows General Files
 Thumbs.db
