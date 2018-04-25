@@ -199,6 +199,8 @@ private:
 
 	int64_t ClampHardwareFrame( int64_t iHardwareFrame ) const;
 	mutable int64_t m_iMaxHardwareFrame;
+	mutable int64_t m_iVMaxHardwareFrame;
+	mutable int32_t soundDriverMaxSamples = 0;
 
 	bool m_bShutdownDecodeThread;
 
