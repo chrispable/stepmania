@@ -3,23 +3,30 @@
 #include "windows.h"
 
 RString hr_ssprintf( int hr, const char *fmt, ... );
+static char isAtLeastVista = 0;
 
 //Keep XP on life support
 static bool at_least_vista()
 {
-OSVERSIONINFOEXW osvi = { sizeof(osvi), 0, 0, 0, 0, { 0 }, 0, 0 };
-DWORDLONG        const dwlConditionMask = VerSetConditionMask(
-	VerSetConditionMask(
-	VerSetConditionMask(
-	0, VER_MAJORVERSION, VER_GREATER_EQUAL),
-	VER_MINORVERSION, VER_GREATER_EQUAL),
-	VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
+	if (isAtLeastVista == 0)
+	{
 
-osvi.dwMajorVersion = 0x0600;
-osvi.dwMinorVersion = 0x0;
-osvi.wServicePackMajor = 0;
+		OSVERSIONINFOEXW osvi = { sizeof(osvi), 0, 0, 0, 0, { 0 }, 0, 0 };
+		DWORDLONG        const dwlConditionMask = VerSetConditionMask(
+			VerSetConditionMask(
+			VerSetConditionMask(
+			0, VER_MAJORVERSION, VER_GREATER_EQUAL),
+			VER_MINORVERSION, VER_GREATER_EQUAL),
+			VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
 
-return VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != false;
+		osvi.dwMajorVersion = 0x0600;
+		osvi.dwMinorVersion = 0x0;
+		osvi.wServicePackMajor = 0;
+
+		if (VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) != false) isAtLeastVista = 2;
+		else isAtLeastVista = 1;
+	}
+	return isAtLeastVista == 2;
 }
 
 #endif

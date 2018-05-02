@@ -18,6 +18,7 @@
 #include <dxerr.h>
 
 #include "archutils/Win32/GraphicsWindow.h"
+#include "archutils/Win32/DirectXHelpers.h"
 
 // Static libraries
 // load Windows D3D9 dynamically
@@ -372,7 +373,8 @@ RString SetD3DParams( bool &bNewDeviceOut )
 			D3DADAPTER_DEFAULT, 
 			D3DDEVTYPE_HAL, 
 			GraphicsWindow::GetHwnd(),
-			D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_MULTITHREADED,
+			//D3DCREATE_HARDWARE_VERTEXPROCESSING | D3DCREATE_MULTITHREADED,
+			D3DCREATE_HARDWARE_VERTEXPROCESSING,
 			&g_d3dpp, 
 			&g_pd3dDevice );
 		if( FAILED(hr) )
@@ -602,12 +604,34 @@ bool RageDisplay_D3D::BeginFrame()
 }
 
 static RageTimer g_LastFrameEndedAt( RageZeroTimer );
+static IDirect3DSwapChain9* m_pSwapChain;
+static BOOL m_bNeedToSleep = true;
 void RageDisplay_D3D::EndFrame()
 {
 	g_pd3dDevice->EndScene();
 
-	FrameLimitBeforeVsync( GetActualVideoModeParams().rate );
-	g_pd3dDevice->Present( 0, 0, 0, 0 );
+	m_bNeedToSleep = true;
+	if (at_least_vista()) 
+	/*
+	dwm makes this much nicer on vista +
+	while the xp code works great on windows 10 (and means FrameLimitBeforeVsync doesnt need to be called),
+	it's not been as exhaustivly tested on vista+ as this code has on xp. Someone wanna test? Means much less computation overhead every frame...
+	*/
+	{
+		FrameLimitBeforeVsync(GetActualVideoModeParams().rate);
+		g_pd3dDevice->Present(0, 0, 0, 0);
+	}
+	else
+	{
+		g_pd3dDevice->GetSwapChain(0, &m_pSwapChain);
+		while (D3DERR_WASSTILLDRAWING == m_pSwapChain->Present(0, 0, 0, 0, D3DPRESENT_DONOTWAIT))
+		{
+			m_bNeedToSleep = false;
+			usleep(1000); // sleep while presenting
+		}//windows always needs to yield some time for the input thread at LEAST, without this dinput is HORRIBLY lagged
+		if (m_bNeedToSleep) usleep(1000); 
+	}
+	
 	FrameLimitAfterVsync();
 
 	RageDisplay::EndFrame();
