@@ -437,6 +437,11 @@ void RageSoundDriver::SetDecodeBufferSize( int iFrames )
 	frames_to_buffer = iFrames;
 }
 
+void RageSoundDriver::low_sample_count_workaround()
+{
+	if (soundDriverMaxSamples != 0) GetHardwareFrame(NULL);
+}
+
 RageSoundDriver::RageSoundDriver():
 	m_Mutex("RageSoundDriver"),
 	m_SoundListMutex("SoundListMutex")
@@ -446,7 +451,6 @@ RageSoundDriver::RageSoundDriver():
 	m_iVMaxHardwareFrame = 0;
 	SetDecodeBufferSize( 4096 );
 	soundDriverMaxSamples = PREFSMAN->m_iRageSoundSampleCountClamp;
-	
 	m_DecodeThread.SetName("Decode thread");
 }
 
@@ -527,7 +531,7 @@ int64_t RageSoundDriver::ClampHardwareFrame( int64_t iHardwareFrame ) const
 	return m_iVMaxHardwareFrame;
 }
 
-int64_t RageSoundDriver::GetHardwareFrame( RageTimer *pTimestamp ) const
+int64_t RageSoundDriver::GetHardwareFrame( RageTimer *pTimestamp=NULL ) const
 {
 	if( pTimestamp == NULL )
 		return ClampHardwareFrame( GetPosition() );
