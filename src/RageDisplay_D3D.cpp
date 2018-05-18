@@ -10,8 +10,10 @@
 #include "RageSurface.h"
 #include "RageSurfaceUtils.h"
 #include "EnumHelper.h"
+#include "GameLoop.h"
 #include "DisplaySpec.h"
 #include "LocalizedString.h"
+#include "Preference.h"
 
 #include <D3dx9tex.h>
 #include <d3d9.h>
@@ -603,38 +605,59 @@ bool RageDisplay_D3D::BeginFrame()
 	return RageDisplay::BeginFrame();
 }
 
-static RageTimer g_LastFrameEndedAt( RageZeroTimer );
+static RageTimer g_LastFrameTime( RageZeroTimer );
 static IDirect3DSwapChain9* m_pSwapChain;
-static BOOL m_bNeedToSleep = true;
+static BOOL m_bPresenting= false;
+
+
+
+boolean m_bNeedToSleep = true;
 void RageDisplay_D3D::EndFrame()
 {
-	g_pd3dDevice->EndScene();
+	if (!m_bPresenting)
+	{
+		g_pd3dDevice->EndScene();
 
-	m_bNeedToSleep = true;
-	if (at_least_vista()) 
-	/*
-	dwm makes this much nicer on vista +
-	while the xp code works great on windows 10 (and means FrameLimitBeforeVsync doesnt need to be called),
-	it's not been as exhaustivly tested on vista+ as this code has on xp. Someone wanna test? Means much less computation overhead every frame...
-	*/
-	{
-		FrameLimitBeforeVsync(GetActualVideoModeParams().rate);
-		g_pd3dDevice->Present(0, 0, 0, 0);
-	}
-	else
-	{
-		g_pd3dDevice->GetSwapChain(0, &m_pSwapChain);
-		while (D3DERR_WASSTILLDRAWING == m_pSwapChain->Present(0, 0, 0, 0, D3DPRESENT_DONOTWAIT))
-		{
-			m_bNeedToSleep = false;
-			usleep(1000); // sleep while presenting
-		}//windows always needs to yield some time for the input thread at LEAST, without this dinput is HORRIBLY lagged
-		if (m_bNeedToSleep) usleep(1000); 
-	}
 	
-	FrameLimitAfterVsync();
+		if (at_least_vista())
+			/*
+			dwm makes this much nicer on vista +
+			while the xp code works great on windows 10 (and means FrameLimitBeforeVsync doesnt need to be called),
+			it's not been as exhaustivly tested on vista+ as this code has on xp. Someone wanna test? Means much less computation overhead every frame...
+			*/
+		{
+			FrameLimitBeforeVsync(GetActualVideoModeParams().rate);
+			g_pd3dDevice->Present(0, 0, 0, 0);
+		}
+		else
+		{
+			g_pd3dDevice->GetSwapChain(0, &m_pSwapChain);
+			m_bNeedToSleep = true;
+			m_bPresenting = true;
+			
+			while (D3DERR_WASSTILLDRAWING == m_pSwapChain->Present(0, 0, 0, 0, D3DPRESENT_DONOTWAIT))
+			{
+				if (m_bNeedToSleep)
+				{
+					usleep(1000);
+					m_bNeedToSleep = false;
+				}
+				else
+				{
+					GameLoop::UpdateAllButDraw(true); //this might irk out an extra frame haha (because we're preparing a frame while one is presenting
+				}
+			}//windows always needs to yield some time for the input thread at LEAST, without this dinput is HORRIBLY lagged
+			
+			m_bPresenting = false;
+			if (m_bNeedToSleep) usleep(1000);
+		}
 
-	RageDisplay::EndFrame();
+		FrameLimitAfterVsync();
+
+		//g_LastFrameTime.Touch();
+		RageDisplay::EndFrame();
+
+	}
 }
 
 bool RageDisplay_D3D::SupportsTextureFormat( RagePixelFormat pixfmt, bool realtime )

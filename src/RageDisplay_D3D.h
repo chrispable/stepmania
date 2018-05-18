@@ -77,7 +77,6 @@ protected:
 	void DrawTrianglesInternal( const RageSpriteVertex v[], int iNumVerts );
 	void DrawSymmetricQuadStripInternal( const RageSpriteVertex v[], int iNumVerts );
 	void DrawCompiledGeometryInternal( const RageCompiledGeometry *p, int iMeshIndex );
-
 	RString TryVideoMode( const VideoModeParams &p, bool &bNewDeviceOut );
 	RageSurface* CreateScreenshot();
 	RageMatrix GetOrthoMatrix( float l, float r, float b, float t, float zn, float zf ); 
