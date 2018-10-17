@@ -56,9 +56,11 @@ list(APPEND SMDATA_GLOBAL_SINGLETON_HPP
 if(WITH_NETWORKING)
   list(APPEND SMDATA_GLOBAL_SINGLETON_SRC
     "ezsockets.cpp"
+    "HTTPHelper.cpp"
   )
   list(APPEND SMDATA_GLOBAL_SINGLETON_HPP
     "ezsockets.h"
+    "HTTPHelper.h"
   )
 endif()
 
