@@ -8,6 +8,7 @@
 #include "LocalizedString.h"
 #include "LuaBinding.h"
 #include "LuaManager.h"
+#include "HTTPHelper.h"
 #include <float.h>
 
 #include <numeric>
@@ -1340,18 +1341,21 @@ bool EndsWith( const RString &sTestThis, const RString &sEnding )
 	return sTestThis.compare( sTestThis.length()-sEnding.length(), sEnding.length(), sEnding ) == 0;
 }
 
-RString URLEncode( const RString &sStr )
+RString URLEncode(const RString &sStr, bool force)
 {
-	RString sOutput;
-	for( unsigned k = 0; k < sStr.size(); k++ )
+	RString Input = HTTPHelper::StripOutContainers(sStr);
+	RString Output;
+	for (unsigned k = 0; k < Input.size(); k++)
 	{
-		char t = sStr[k];
-		if( t >= '!' && t <= 'z' )
-			sOutput += t;
+		char t = Input.at(k);
+		if (((t >= '0') && (t <= 'z')) && force == false)
+		{
+			Output += t;
+		}
 		else
-			sOutput += "%" + ssprintf( "%02X", t );
+			Output += "%" + ssprintf("%X", t & 0xFF);
 	}
-	return sOutput;
+	return Output;
 }
 
 // remove various version control-related files

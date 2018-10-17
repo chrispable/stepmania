@@ -42,6 +42,9 @@ public:
 	bool create(EzSockets_Proto Protocol);
 	bool create(EzSockets_Proto Protocol, int Type);
 
+	//set socket timeout
+	void setTimeout(int sec, int usec);
+
 	//Bind Socket to local port
 	bool bind(unsigned short port);
 
@@ -88,6 +91,7 @@ public:
 	int ReadStr(string& data, char delim = '\0');
 	int PeekStr(string& data, char delim = '\0');
 
+	void setBlocking(bool b = true);
 
 	//Operators
 	char operator[] (int i); //Access buffer

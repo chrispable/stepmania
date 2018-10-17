@@ -13,6 +13,10 @@
 #include "SongPosition.h"
 #include "Preference.h"
 
+#if !defined(WITHOUT_NETWORKING)
+#include "HTTPHelper.h"
+#endif
+
 #include <map>
 #include <deque>
 #include <set>
@@ -72,6 +76,7 @@ public:
 	 * @param pn the PlayerNumber to save the stats to. */
 	void SaveCurrentSettingsToProfile( PlayerNumber pn );
 	Song* GetDefaultSong() const;
+	void HTTPBroadcastSongInProgress(bool bNoSong = false);
 
 	bool CanSafelyEnterGameplay(RString& reason);
 	void SetCompatibleStylesForPlayers();
@@ -121,6 +126,7 @@ public:
 	Difficulty GetHardestStepsDifficulty() const;
 	RageTimer		m_timeGameStarted;	// from the moment the first player pressed Start
 	LuaTable		*m_Environment;
+	RString			m_sSongBroadcastURL;
 
 	// This is set to a random number per-game/round; it can be used for a random seed.
 	int			m_iGameSeed, m_iStageSeed;
@@ -434,6 +440,11 @@ private:
 
 	GameState(const GameState& rhs);
 	GameState& operator=(const GameState& rhs);
+
+	//network private vars
+#if !defined(WITHOUT_NETWORKING)
+	HTTPHelper* m_SongBroadcastHTTP;
+#endif
 
 };
 

@@ -28,6 +28,7 @@ public:
 
 	/** @brief Remove the MSDFile. */
 	virtual ~MsdFile() { }
+	static RString ReadFileIntoString(RString sNewPath);
 
 	/**
 	 * @brief Attempt to read an MSD file.

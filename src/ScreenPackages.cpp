@@ -393,7 +393,7 @@ void ScreenPackages::HTMLParse()
 			if ( j < l )
 				k = j;
 
-			RString TempLink = StripOutContainers( m_sBUFFER.substr(m+1,k-m-1) );
+			RString TempLink = HTTPHelper::StripOutContainers(m_sBUFFER.substr(m + 1, k - m - 1));
 			// xxx: handle https? -aj
 			if ( TempLink.substr(0,7).compare("http://") != 0 )
 				TempLink = m_sBaseAddress + TempLink;
@@ -412,34 +412,6 @@ void ScreenPackages::HTMLParse()
 			i = m_sBUFFER.find( "<a " );
 	}
 	UpdateLinksList();
-}
-
-RString ScreenPackages::StripOutContainers( const RString & In )
-{
-	if( In.size() == 0 )
-		return RString();
-
-	unsigned i = 0;
-	char t = In.at(i);
-	while( t == ' ' && i < In.length() )
-	{
-		t = In.at(++i);
-	}
-
-	if( t == '\"' || t == '\'' )
-	{
-		unsigned j = i+1; 
-		char u = In.at(j);
-		while( u != t && j < In.length() )
-		{
-			u = In.at(++j);
-		}
-		if( j == i )
-			return StripOutContainers( In.substr(i+1) );
-		else
-			return StripOutContainers( In.substr(i+1, j-i-1) );
-	}
-	return In.substr( i );
 }
 
 void ScreenPackages::UpdateProgress()
@@ -484,7 +456,7 @@ void ScreenPackages::EnterURL( const RString & sURL )
 	int Port=80;
 	RString sAddress;
 
-	if( !ParseHTTPAddress( sURL, Proto, Server, Port, sAddress ) )
+	if (!HTTPHelper::ParseHTTPAddress(sURL, Proto, Server, Port, sAddress))
 	{
 		m_sStatus = INVALID_URL.GetValue();
 		UpdateProgress();
@@ -540,7 +512,7 @@ void ScreenPackages::EnterURL( const RString & sURL )
 	}
 	// Continue...
 
-	sAddress = URLEncode( StripOutContainers(sAddress) );
+	sAddress = URLEncode(HTTPHelper::StripOutContainers(sAddress));
 
 	if ( sAddress != "/" )
 		sAddress = "/" + sAddress;
@@ -686,35 +658,6 @@ void ScreenPackages::HTTPUpdate()
 	}
 }
 
-bool ScreenPackages::ParseHTTPAddress( const RString &URL, RString &sProto, RString &sServer, int &iPort, RString &sAddress )
-{
-	// [PROTO://]SERVER[:PORT][/URL]
-
-	Regex re(
-		"^([A-Z]+)://" // [0]: HTTP://
-		"([^/:]+)"     // [1]: a.b.com
-		"(:([0-9]+))?" // [2], [3]: :1234 (optional, default 80)
-		"(/(.*))?$");    // [4], [5]: /foo.html (optional)
-	vector<RString> asMatches;
-	if( !re.Compare( URL, asMatches ) )
-		return false;
-	ASSERT( asMatches.size() == 6 );
-
-	sProto = asMatches[0];
-	sServer = asMatches[1];
-	if( asMatches[3] != "" )
-	{
-		iPort = StringToInt(asMatches[3]);
-		if( iPort == 0 )
-			return false;
-	}
-	else
-		iPort = 80;
-
-	sAddress = asMatches[5];
-
-	return true;
-}
 
 #endif
 /*

@@ -8,6 +8,10 @@
 #include "Grade.h"
 #include "Profile.h"
 
+#if !defined(WITHOUT_NETWORKING)
+#include "HTTPHelper.h"
+#endif
+
 class Song;
 class Steps;
 class Style;
@@ -131,6 +135,11 @@ private:
 
 	Profile	*m_pMemoryCardProfile[NUM_PLAYERS];	// holds Profile for the currently inserted card
 	Profile *m_pMachineProfile;
+	RString			m_sScoreBroadcastURL;
+	//network private vars
+#if !defined(WITHOUT_NETWORKING)
+	HTTPHelper* m_ScoreBroadcastHTTP;
+#endif
 };
 
 extern ProfileManager*	PROFILEMAN;	// global and accessible from anywhere in our program

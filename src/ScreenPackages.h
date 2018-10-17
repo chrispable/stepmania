@@ -3,13 +3,15 @@
 
 #include "ScreenWithMenuElements.h"
 #include "BitmapText.h"
-#include "ezsockets.h"
+
 #include "RageFileManager.h"
 #include "RageFile.h"
 #include "Sprite.h"
 #include "ThemeMetric.h"
 
 #if !defined(WITHOUT_NETWORKING)
+#include "ezsockets.h"
+#include "HTTPHelper.h" 
 
 class ScreenPackages : public ScreenWithMenuElements
 {
@@ -42,7 +44,6 @@ private:
 
 	void HTMLParse();
 
-	RString StripOutContainers( const RString & In );	//Strip off "'s and ''s
 
 	AutoActor	m_sprExistingBG;
 	AutoActor	m_sprWebBG;
@@ -69,9 +70,7 @@ private:
 	void EnterURL( const RString & sURL );
 	void HTTPUpdate( );
 
-	//True if proper string, false if improper
-	bool ParseHTTPAddress( const RString & URL, RString & Proto, RString & Server, int & Port, RString & Addy );
-
+	
 	Sprite	m_sprDL;
 	Sprite	m_sprDLBG;
 	void	UpdateProgress();

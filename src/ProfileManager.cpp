@@ -23,9 +23,11 @@
 #include "HighScore.h"
 #include "Character.h"
 #include "CharacterManager.h"
-
+#include "NetworkSyncManager.h"
+#include "MsdFile.h"
 
 ProfileManager*	PROFILEMAN = NULL;	// global and accessible from anywhere in our program
+static Preference<RString> pScoreBroadcastURL("ScoreBroadcastURL", "");
 
 #define ID_DIGITS 8
 #define ID_DIGITS_STR "8"
@@ -78,6 +80,13 @@ ProfileManager::ProfileManager()
 	m_pMachineProfile = new Profile;
 	FOREACH_PlayerNumber(pn)
 		m_pMemoryCardProfile[pn] = new Profile;
+
+	//allocate networking variables
+#if !defined(WITHOUT_NETWORKING)
+	m_ScoreBroadcastHTTP = new HTTPHelper();
+	//DUMB but if I don't do it this way, it crashes. Gotta have a private member instead of a preference	
+	m_sScoreBroadcastURL.assign(pScoreBroadcastURL.Get().c_str());
+#endif
 
 	// Register with Lua.
 	{
@@ -886,6 +895,94 @@ void ProfileManager::AddStepsScore( const Song* pSong, const Steps* pSteps, Play
 		GetProfile(pn)->SaveStepsRecentScore( pSong, pSteps, hs );
 	GetMachineProfile()->SaveStepsRecentScore( pSong, pSteps, hs );
 	*/
+
+	//broadcast score to db if it's not an edit from the card or a custom song -- could put something inappropriate in there
+	//if we have networking
+#if !defined(WITHOUT_NETWORKING)
+	// anonymous profiles keep generating guids and polluting the database, higher collission potential. Require a USB for score to broadcast
+	if (m_sScoreBroadcastURL.length()>3)
+	{
+		if (!pSteps->IsAPlayerEdit() && !pSong->WasLoadedFromProfile() )
+		{
+			char temp[50];
+
+			RString sHSName = URLEncode(hs.GetName());
+			Profile* pProfile = PROFILEMAN->GetProfile(pn);
+			if (pProfile && !pProfile->m_sLastUsedHighScoreName.empty())
+			{
+				sHSName = URLEncode(pProfile->m_sLastUsedHighScoreName);
+			}
+			RString sTitle = URLEncode(pSong->GetTranslitFullTitle(), true);
+			RString sArtist = URLEncode(pSong->GetDisplayArtist(), true);
+			RString sDir(URLEncode(pSong->GetSongDir()));
+
+			std::sprintf(temp, "%d", pSteps->GetDifficulty());
+			RString sDifficulty = URLEncode(temp);
+
+			StepsType st = pSteps->m_StepsType;
+			RString sStepType = "0";
+			switch (st)
+			{
+			case StepsType_techno_double4:
+			case StepsType_techno_double5:
+			case StepsType_techno_double8:
+			case StepsType_maniax_double:
+			case StepsType_beat_double7:
+			case StepsType_beat_double5:
+			case StepsType_ez2_double:
+			case StepsType_pump_halfdouble:
+			case StepsType_pump_double:
+			case StepsType_dance_double:
+				sStepType = "1";
+				break;
+			default:
+				break;
+			}
+			sStepType = URLEncode(sStepType);
+
+			std::sprintf(temp, "%d", hs.GetGrade());
+			RString sGrade = URLEncode(temp);
+			std::sprintf(temp, "%f", hs.GetPercentDP());
+			RString sPercent = URLEncode(temp);
+
+			std::sprintf(temp, "%d", hs.GetScore());
+			RString sScore = URLEncode(temp);
+			sprintf(temp, "%d", pn);
+			RString sPlayerGUID = URLEncode(temp);
+			sprintf(temp, "%d", GAMESTATE->GetNumSidesJoined());
+			RString sNumPlayers = URLEncode(temp);
+
+			//if we have a valid profile and it was loaded from usb, populate player guid
+			if (pProfile && PROFILEMAN->ProfileWasLoadedFromMemoryCard(pn))
+			{
+				sPlayerGUID = URLEncode(PROFILEMAN->GetProfile(pn)->m_sGuid);
+			}
+
+			RString sMachineGUID = URLEncode(hs.GetMachineGuid());
+			RString sEventMode = "0";
+			if (GAMESTATE->IsEventMode()) sEventMode = "1";
+
+			RString sMD5Sum = MsdFile::ReadFileIntoString(pSong->GetSongFilePath());
+			if (sMD5Sum == NULL)
+			{
+				sMD5Sum = sDir;
+				sMD5Sum.append(sMachineGUID);
+			}
+			sMD5Sum = URLEncode(NSMAN->MD5Hex(sMD5Sum));
+			RString sDataToSend = "machineguid=" + sMachineGUID + "&path=" + sDir + "&sscfilemd5=" + sMD5Sum + "&title=" + sTitle + "&artist=" + sArtist + "&playerguid=" + sPlayerGUID + "&eventmode=" + sEventMode + "&difficulty=" + sDifficulty + "&steptype=" + sStepType + "&name=" + sHSName + "&score=" + sScore + "&percent=" + sPercent + "&grade=" + sGrade + "&numplayers=" + sNumPlayers;
+
+			//LOG->Info("ProfileManager::AddStepsScore Want to send %s to %s",sDataToSend.c_str(), m_sScoreBroadcastURL.c_str());
+
+			m_ScoreBroadcastHTTP->Threaded_SubmitPostRequest(m_sScoreBroadcastURL, sDataToSend);
+			//LOG->Info("ProfileManager::AddStepsScore sent!!");
+			//RString res = m_ScoreBroadcastHTTP->GetThreadedResult();
+			//LOG->Info("ProfileManager::AddStepsScore res: %s",res.c_str());
+
+
+		}
+	}
+#endif
+
 }
 
 void ProfileManager::IncrementStepsPlayCount( const Song* pSong, const Steps* pSteps, PlayerNumber pn )

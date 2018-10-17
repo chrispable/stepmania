@@ -487,7 +487,7 @@ void ScreenManager::Update( float fDeltaTime )
 	/* If we're currently inside a background screen load, and m_sDelayedScreen
 	 * is set, then the screen called SetNewScreen before we finished preparing.
 	 * Postpone it until we're finished loading. */
-	if( m_sDelayedScreen.size() != 0 )
+	if ((m_sDelayedScreen.size() != 0))
 	{
 		LoadDelayedScreen();
 	}
