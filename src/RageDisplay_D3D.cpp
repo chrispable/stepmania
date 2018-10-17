@@ -619,17 +619,17 @@ void RageDisplay_D3D::EndFrame()
 		g_pd3dDevice->EndScene();
 
 	
-		if (at_least_vista())
+		//if (at_least_vista())
 			/*
 			dwm makes this much nicer on vista +
 			while the xp code works great on windows 10 (and means FrameLimitBeforeVsync doesnt need to be called),
 			it's not been as exhaustivly tested on vista+ as this code has on xp. Someone wanna test? Means much less computation overhead every frame...
 			*/
-		{
-			FrameLimitBeforeVsync(GetActualVideoModeParams().rate);
-			g_pd3dDevice->Present(0, 0, 0, 0);
-		}
-		else
+		//{
+		//	FrameLimitBeforeVsync(GetActualVideoModeParams().rate);
+		//	g_pd3dDevice->Present(0, 0, 0, 0);
+		//}
+		//else
 		{
 			g_pd3dDevice->GetSwapChain(0, &m_pSwapChain);
 			m_bNeedToSleep = true;
