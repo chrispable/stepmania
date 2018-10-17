@@ -328,7 +328,7 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 
 	if (!isP3IO && Board.hasVEXTIO()) // if p2io and has vextio
 	{
-		EXTIOFunction = &InputHandler_Python23IO::NOP;
+		EXTIOFunction = &InputHandler_Python23IO::UpdateLightsVEXTIO;
 	}
 	else
 	{
