@@ -47,6 +47,9 @@ private:
 	static bool m_bShutdown;
 
 	static serial::Serial extio;
+	bool myLights[10];// = { false, false, false, false, false, false, false, false, false, false };
+	bool previousLights[10];// = { true, true, true, true, true, true, true, true, true, true };
+
 	void UpdateLightsEXTIO();
 	void ExtioSetPlayerPanel(int player, uint8_t panel, int state);
 	void WriteExtioPacket();
@@ -59,6 +62,8 @@ private:
 	void EXTIOThreadMain();
 	static int EXTIOThread_Start(void *p);
 	static bool AreLightsUpdated();
+	static serial::Timeout serial_timeout;// = serial::Timeout::simpleTimeout(1000);
+	static uint8_t extio_message[];// = { 0, 0, 0, 0 };
 
 
 };

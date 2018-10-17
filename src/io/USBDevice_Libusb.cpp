@@ -76,7 +76,7 @@ PSTRING USBDevice::GetClassDescription(unsigned iClass)
 
 PSTRING USBDevice::GetDescription()
 {
-	if( IsP3IO() )
+	if( IsPython23IO() )
 		return "Input/lights controller";
 
 	std::vector<std::string> sInterfaceDescriptions;
@@ -141,9 +141,9 @@ bool USBDevice::IsHub()
 	return false;
 }
 
-bool USBDevice::IsP3IO()
+bool USBDevice::IsPython23IO()
 {
-	return P3IO::DeviceMatches( m_iIdVendor, m_iIdProduct );
+	return Python23IO::DeviceMatches( m_iIdVendor, m_iIdProduct );
 }
 
 bool USBDevice::Load(struct usb_device *dev)

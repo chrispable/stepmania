@@ -5,7 +5,7 @@
 #include "ProductInfo.h" // Used to look for PRODUCT_ID_BARE which means STEPMANIA 5, NOT OITG
 
 /* For "DeviceMatches" */
-#include "P3IO.h"
+#include "Python23IO.h"
 
 #include <usb.h>
 #ifdef PRODUCT_ID_BARE
@@ -46,7 +46,7 @@ public:
 	PSTRING GetDeviceDir();
 
 	bool IsHub();
-	bool IsP3IO();
+	bool IsPython23IO();
 
 private:
 	int m_iIdVendor;

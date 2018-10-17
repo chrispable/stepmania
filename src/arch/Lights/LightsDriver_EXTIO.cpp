@@ -16,6 +16,15 @@ static Preference<PSTRING> m_EXTIO_COMPORT("EXTIOComPort", "COM1"); //default on
 static Preference<PSTRING> m_EXTIO_COMPORT("EXTIOComPort", "ttys0"); //default on *nix?
 #endif
 
+/*
+Note: This driver is ONLY for EXTIOs that are connected directly to the com port
+of the computer. In the case of a Python2io, there is a port on the IO itself
+that is abstracted from the OS. You will configure that in the Python23IO driver
+if you have connected to that port OR you will connect the EXTIO directly to the
+computer, in the case of a Python3IO.
+
+*/
+
 //stepmania constructs
 RageMutex LightsDriver_EXTIO::m_Lock( "LightsDriver_EXTIO");
 LightsState LightsDriver_EXTIO::m_State;
@@ -25,8 +34,9 @@ bool LightsDriver_EXTIO::m_bShutdown = false;
 
 //extio constructs
 serial::Serial LightsDriver_EXTIO::extio;
-static serial::Timeout serial_timeout = serial::Timeout::simpleTimeout(1000);
-static uint8_t extio_message[] = { 0, 0, 0, 0 };
+serial::Timeout LightsDriver_EXTIO::serial_timeout = serial::Timeout::simpleTimeout(1000);
+uint8_t LightsDriver_EXTIO::extio_message[] = { 0, 0, 0, 0 };
+
 
 
 
@@ -40,6 +50,13 @@ LightsDriver_EXTIO::LightsDriver_EXTIO()
 
 	LOG->Info("EXTIO: Initializing EXTIO Light drivers...");
 	LOG->Info("EXTIO: Configured EXTIO serial port: %s", m_EXTIO_COMPORT.Get().c_str());
+
+	//initialize light defaults
+	for (int i = 0; i < 10; i++)
+	{
+		myLights[i] = false;
+		previousLights[i] = true;
+	}
 	//check if we have a valid com port name for EXTIO
 	if (m_EXTIO_COMPORT.Get().length()>1)
 	{
@@ -65,31 +82,28 @@ LightsDriver_EXTIO::~LightsDriver_EXTIO()
 void LightsDriver_EXTIO::UpdateLightsEXTIO()
 {
 	//itg lights are DUMB AS FUCK, you can fix this by setting BlinkGameplayButtonLightsOnNote=0 in static.ini
-	if (!AreLightsUpdated()) return;
+	if (!AreLightsUpdated()) return; // no update packet
 	memset(extio_message, 0, 4 * sizeof(uint8_t));// zero out the message
-	LightsState ls = GetState();
-	if (ls.m_bCabinetLights[LIGHT_BASS_LEFT] || ls.m_bCabinetLights[LIGHT_BASS_RIGHT]) extio_message[2] |= EXTIO_OUT_NEON;
 
+	//lock read/write access to the lights while we write them out
+	m_Lock.Lock();
+
+	//we may haev gotten an update packet but pad lights may not have changed
+	if (!memcmp(myLights, previousLights, sizeof(myLights))) {
+		return;
+	}
+	
 	//stuff for the extio
-#ifdef PRODUCT_ID_BARE
-	if (ls.m_bGameButtonLights[GameController_1][DANCE_BUTTON_LEFT]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_LEFT, 1);
-	if (ls.m_bGameButtonLights[GameController_1][DANCE_BUTTON_RIGHT]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_RIGHT, 1);
-	if (ls.m_bGameButtonLights[GameController_1][DANCE_BUTTON_UP]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_UP, 1);
-	if (ls.m_bGameButtonLights[GameController_1][DANCE_BUTTON_DOWN]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_DOWN, 1);
-	if (ls.m_bGameButtonLights[GameController_2][DANCE_BUTTON_LEFT]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_LEFT, 1);
-	if (ls.m_bGameButtonLights[GameController_2][DANCE_BUTTON_RIGHT]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_RIGHT, 1);
-	if (ls.m_bGameButtonLights[GameController_2][DANCE_BUTTON_UP]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_UP, 1);
-	if (ls.m_bGameButtonLights[GameController_2][DANCE_BUTTON_DOWN]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_DOWN, 1);
-#else
-	if (ls.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_LEFT]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_LEFT, 1);
-	if (ls.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_RIGHT]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_RIGHT, 1);
-	if (ls.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_UP]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_UP, 1);
-	if (ls.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_DOWN]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_DOWN, 1);
-	if (ls.m_bGameButtonLights[GAME_CONTROLLER_2][DANCE_BUTTON_LEFT]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_LEFT, 1);
-	if (ls.m_bGameButtonLights[GAME_CONTROLLER_2][DANCE_BUTTON_RIGHT]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_RIGHT, 1);
-	if (ls.m_bGameButtonLights[GAME_CONTROLLER_2][DANCE_BUTTON_UP]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_UP, 1);
-	if (ls.m_bGameButtonLights[GAME_CONTROLLER_2][DANCE_BUTTON_DOWN]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_DOWN, 1);
-#endif	
+	if (myLights[0]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_LEFT, 1);
+	if (myLights[1]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_RIGHT, 1);
+	if (myLights[2]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_UP, 1);
+	if (myLights[3]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_DOWN, 1);
+	if (myLights[4]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_LEFT, 1);
+	if (myLights[5]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_RIGHT, 1);
+	if (myLights[6]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_UP, 1);
+	if (myLights[7]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_DOWN, 1);
+	if (myLights[8] || myLights[9]) extio_message[2] |= EXTIO_OUT_NEON;
+	m_Lock.Unlock();
 
 	WriteExtioPacket();
 }
@@ -189,9 +203,34 @@ int LightsDriver_EXTIO::EXTIOThread_Start(void *p)
 
 void LightsDriver_EXTIO::Set(const LightsState *ls)
 {
+	LightsState l= *ls;
 	m_Lock.Lock();
+	memcpy(&previousLights, myLights, sizeof(myLights));
 	lightsUpdated=true;
-	m_State = *ls;
+
+
+	//stuff for the extio
+#ifdef PRODUCT_ID_BARE
+	if (l.m_bGameButtonLights[GameController_1][DANCE_BUTTON_LEFT])		myLights[0] = true;
+	if (l.m_bGameButtonLights[GameController_1][DANCE_BUTTON_RIGHT])	myLights[1] = true;
+	if (l.m_bGameButtonLights[GameController_1][DANCE_BUTTON_UP])		myLights[2] = true;
+	if (l.m_bGameButtonLights[GameController_1][DANCE_BUTTON_DOWN])		myLights[3] = true;
+	if (l.m_bGameButtonLights[GameController_2][DANCE_BUTTON_LEFT])		myLights[4] = true;
+	if (l.m_bGameButtonLights[GameController_2][DANCE_BUTTON_RIGHT])	myLights[5] = true;
+	if (l.m_bGameButtonLights[GameController_2][DANCE_BUTTON_UP])		myLights[6] = true;
+	if (l.m_bGameButtonLights[GameController_2][DANCE_BUTTON_DOWN])		myLights[7] = true;
+#else
+	if (l.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_LEFT])	myLights[0] = true;
+	if (l.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_RIGHT])	myLights[1] = true;
+	if (l.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_UP])		myLights[2] = true;
+	if (l.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_DOWN])	myLights[3] = true;
+	if (l.m_bGameButtonLights[GAME_CONTROLLER_2][DANCE_BUTTON_LEFT])	myLights[4] = true;
+	if (l.m_bGameButtonLights[GAME_CONTROLLER_2][DANCE_BUTTON_RIGHT])	myLights[5] = true;
+	if (l.m_bGameButtonLights[GAME_CONTROLLER_2][DANCE_BUTTON_UP])		myLights[6] = true;
+	if (l.m_bGameButtonLights[GAME_CONTROLLER_2][DANCE_BUTTON_DOWN])	myLights[7] = true;
+#endif
+	if (l.m_bCabinetLights[LIGHT_BASS_LEFT])							myLights[8] = true;
+	if (l.m_bCabinetLights[LIGHT_BASS_RIGHT])							myLights[9] = true;
 	m_Lock.Unlock();
 }
 
@@ -200,15 +239,7 @@ bool LightsDriver_EXTIO::AreLightsUpdated()
 	bool ret;
 	m_Lock.Lock();
 	ret=lightsUpdated;
-	m_Lock.Unlock();
-	return ret;
-}
-
-LightsState LightsDriver_EXTIO::GetState()
-{
-	m_Lock.Lock();
-	lightsUpdated=false;
-	LightsState ret( m_State );
+	lightsUpdated = false;
 	m_Lock.Unlock();
 	return ret;
 }

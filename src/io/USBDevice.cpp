@@ -6,7 +6,7 @@
 #include "io/PIUIO.h"
 #include "io/ITGIO.h"
 #include "io/MiniMaid.h"
-#include "io/P3IO.h"
+#include "io/Python23IO.h"
 
 #include <map>
 #include <usb.h>
@@ -38,7 +38,7 @@ PSTRING USBDevice::GetClassDescription( unsigned iClass )
 
 PSTRING USBDevice::GetDescription()
 {
-	if( IsITGIO() || IsPIUIO() || IsMiniMaid() || IsP3IO() )
+	if( IsITGIO() || IsPIUIO() || IsMiniMaid() || IsPython23IO() )
 		return "Input/lights controller";
 	
 	vector<PSTRING> sInterfaceDescriptions;
@@ -95,9 +95,9 @@ bool USBDevice::IsMiniMaid()
 	return MiniMaid::DeviceMatches( m_iIdVendor, m_iIdProduct );
 }
 
-bool USBDevice::IsP3IO()
+bool USBDevice::IsPython23IO()
 {
-	return P3IO::DeviceMatches( m_iIdVendor, m_iIdProduct );
+	return Python23IO::DeviceMatches( m_iIdVendor, m_iIdProduct );
 }
 
 bool USBDevice::Load(const PSTRING &nDeviceDir, const vector<PSTRING> &interfaces)

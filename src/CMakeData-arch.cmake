@@ -401,12 +401,12 @@ source_group("Arch Specific\\\\Lights" FILES ${SMDATA_ARCH_LIGHTS_SRC} ${SMDATA_
 list(APPEND SMDATA_ARCH_INPUT_SRC
   "arch/InputHandler/InputHandler.cpp"
   "arch/InputHandler/InputHandler_MonkeyKeyboard.cpp"
-  "arch/InputHandler/InputHandler_P3IO.cpp"
+  "arch/InputHandler/InputHandler_Python23IO.cpp"
 )
 list(APPEND SMDATA_ARCH_INPUT_HPP
   "arch/InputHandler/InputHandler.h"
   "arch/InputHandler/InputHandler_MonkeyKeyboard.h"
-  "arch/InputHandler/InputHandler_P3IO.h"
+  "arch/InputHandler/InputHandler_Python23IO.h"
 )
 
 if(WIN32)
