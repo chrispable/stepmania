@@ -38,8 +38,6 @@ My questions on the ML went unanswered so I leave this as an experiment to test 
 #include "InputHandler_Python23IO.h"
 
 
-bool InputHandler_Python23IO::HDCabinetLayout = false;
-
 #ifdef PRODUCT_ID_BARE
 #ifndef STDSTRING_H
 #include <array>
@@ -58,7 +56,7 @@ Preference<PSTRING>InputHandler_Python23IO:: m_sP23IOMode("Python23IO_Mode", "SD
 Preference<bool> InputHandler_Python23IO::m_bP2IOEXTIO("Python23IO_P2IO_EXTIO", true);
 bool InputHandler_Python23IO::hasHDXB = true;
 bool InputHandler_Python23IO::isP3IO = true;
-
+bool InputHandler_Python23IO::HDCabinetLayout = false;
 
 
 
@@ -161,8 +159,6 @@ InputHandler_Python23IO::InputHandler_Python23IO()
 	}
 
 	LOG->Info("Checking Python23IO mode...");
-
-	//LOG->Info("Preference is %s",m_sCabinetType.Get().c_str());
 
 	if (strcasecmp(m_sP23IOMode.Get().c_str(), "HDP3IO") == 0)
 	{
@@ -455,11 +451,6 @@ void InputHandler_Python23IO::GetCurrentLightsState()
 	memcpy( &previousLights,  myLights, 16 * sizeof( bool ) ); // stuff in a Python23IO wrapper
 	memset( myLights, false, 16 * sizeof(bool));// zero out the message
 
-	#ifdef PRODUCT_ID_BARE
-	
-#else
-	
-#endif
 
 #ifdef PRODUCT_ID_BARE
 	LightsState ls = LightsDriver_Export::GetState();
