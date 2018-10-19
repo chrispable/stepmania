@@ -27,13 +27,15 @@ int Python23IO::m_iInputErrorCount = 0;
 uint8_t Python23IO::packet_sequence = 0;
 uint8_t Python23IO::packets_since_keepalive = 0;
 
+//these get changed for p2io but they are correct for p3io
+uint8_t Python23IO::hdxb_vcom_port = 0x00;//p3io setting
+uint8_t Python23IO::hxdb_vbaud_rate = 0x03; //3 on p3io, 2 on p2io
 
-uint8_t Python23IO::hdxb_vcom_port = 0x00;
-uint8_t Python23IO::hxdb_vbaud_rate = 0x03; //this is 2 on p2io
+/////////////////////////// below is p2io only
 uint8_t Python23IO::extio_vcom_port = 0x00;//p2io only
 uint8_t Python23IO::extio_vbaud_rate = 0x03;//p2io only
 
-Preference<PSTRING> Python23IO::m_COM4PORT("Python23IOHDXBPORT", ""); //COM2 on unicorn tail
+Preference<PSTRING> Python23IO::m_COM4PORT("Python23IO_HDXB_PORT", ""); //COM2 on unicorn tail
 Preference<PSTRING> Python23IO::m_sP23IOMode("Python23IO_Mode", "SDP3IO");
 Preference<bool> Python23IO::m_bP2IOEXTIO("Python23IO_P2IO_EXTIO", true);
 Preference<int> Python23IO::m_iP2IO_HDXB_DEV_ID("Python23IO_HDXB_DEV_ID", 3);
@@ -67,6 +69,7 @@ bool Python23IO::Open()
 {
 	hdxb_vcom_port = 0x00;
 	hxdb_vbaud_rate = 0x03; //this is 2 on p2io
+	
 	extio_vcom_port = 0x00;//p2io only
 	extio_vbaud_rate = 0x03;//p2io only
 	//init
@@ -112,6 +115,7 @@ bool Python23IO::Open()
 	{
 		board_hasHDXB = true;
 	}
+	
 	if (board_isP2IO)
 	{
 		hxdb_vbaud_rate = 0x02;
@@ -122,8 +126,6 @@ bool Python23IO::Open()
 			if (OpenInternal(python2io_VENDOR_ID[i], python2io_PRODUCT_ID[i]))
 			{
 				LOG->Info("Python23IO P2IO Driver:: Connected to index %d", i);
-				//LOG->Info("init Python23IO P3IO watch dog "); //i dont think p2io does this
-				//InitHDAndWatchDog();
 				m_bConnected = true;
 				FlushBulkReadBuffer();
 			}
@@ -144,6 +146,17 @@ bool Python23IO::Open()
 		}
 	}
 
+	if (board_isP2IO)
+	{
+		board_hasVEXTIO = m_bP2IOEXTIO.Get();
+		if (board_hasVEXTIO && m_bConnected)
+		{
+			m_pDriver->SetConfiguration(1);
+			openVEXTIO();
+		}
+	}
+
+	
 	if (board_hasHDXB)
 	{
 		openHDXB();
@@ -169,11 +182,7 @@ bool Python23IO::Open()
 		}
 	}
 
-	if (board_isP2IO)
-	{
-		board_hasVEXTIO = m_bP2IOEXTIO.Get();
-	}
-	
+	LOG->Info("**************Python23IO board specs: %s isp2io:%d hashdxb:%d hasvextio:%d", m_sP23IOMode.Get().c_str(),board_isP2IO, board_hasHDXB, board_hasVEXTIO);
 	return m_bConnected;
 }
 
@@ -653,6 +662,7 @@ bool Python23IO::initHDXB2()
 	}
 	else
 	{
+		if (!m_bConnected) return false;
 		//should build this but.. meh... lazy, manually define it
 		//init into opcode 3?
 		uint8_t hdxb_op3[]={
@@ -813,6 +823,42 @@ bool Python23IO::initHDXB4()
 
 bool Python23IO::openVEXTIO()
 {
+	uint8_t compacket22[] = {
+		0xaa,
+		0x02,
+		0x06,
+		0x22,
+		0x13
+	};
+		uint8_t compacket2_f_3_8[] = {
+		0xaa,
+		0x02,
+		0x06,
+		0x23
+	};
+		WriteToBulkWithExpectedReply(compacket2_f_3_8, false, true);
+		compacket2_f_3_8[3] = 0x2f;
+		WriteToBulkWithExpectedReply(compacket2_f_3_8, false, true);
+		compacket2_f_3_8[3] = 0x28;
+		WriteToBulkWithExpectedReply(compacket2_f_3_8, false, true);
+		uint8_t compacket2a[] = {
+			0xaa,
+			0x03,
+			0x06,
+			0x2a,
+			0x05
+		};
+		WriteToBulkWithExpectedReply(compacket2a, false, true);
+		compacket2_f_3_8[3] = 0x23;
+		WriteToBulkWithExpectedReply(compacket2_f_3_8, false, true);
+		uint8_t compacket32[] = {
+			0xaa,
+			0x04,
+			0x06,
+			0x32,
+			0x00,
+			0x00
+		};
 	uint8_t com_open_command[] = {
 		0xaa, // packet start
 		0x05, // length
@@ -822,8 +868,9 @@ bool Python23IO::openVEXTIO()
 		0x00, // @ baud
 		extio_vbaud_rate  // choose speed: ?, ?, 19200, 38400, 57600
 		};
-		//LOG->Info("**************VEXTIO Python23IO OPEN:");
+	LOG->Info("**************VEXTIO Python23IO OPEN: %02X %02X %02X %02X %02X %02X %02X", com_open_command[0], com_open_command[1], com_open_command[2], com_open_command[3], com_open_command[4], com_open_command[5], com_open_command[6] );
 		return WriteToBulkWithExpectedReply(com_open_command, false, true);
+
 }
 
 bool Python23IO::openHDXB()
@@ -837,7 +884,7 @@ bool Python23IO::openHDXB()
 	}
 	else
 	{
-
+		if (!m_bConnected) return false;
 	
 		uint8_t com_open_command[] = {
 		0xaa, // packet start
@@ -868,6 +915,23 @@ bool Python23IO::readHDXB(int len)
 	//LOG->Info("**************HDXB Python23IO Read:");
 	return WriteToBulkWithExpectedReply(com_read_command, false, true);
 }
+
+bool Python23IO::readVEXTIO(int len)
+{
+	usleep(36000); // 36 ms wait
+	uint8_t com_read_command[] = {
+		0xaa, // packet start
+		0x04, // length
+		0x0f, // sequence
+		0x3b, // com read opcode
+		extio_vcom_port, // virtual com port
+		0x40  // 7e is 126 bytes to read
+	};
+	com_read_command[5] = len & 0xFF; // plug in passed in len
+	LOG->Info("**************VEXTIO Python23IO Read command: %02X %02X %02X %02X %02X %02X", com_read_command[0], com_read_command[1], com_read_command[2], com_read_command[3], com_read_command[4], com_read_command[5]);
+	return WriteToBulkWithExpectedReply(com_read_command, false, true);
+}
+
 
 //pass in a raw payload only
 bool Python23IO::writeHDXB(uint8_t* payload, int len, uint8_t opcode)
@@ -907,6 +971,7 @@ bool Python23IO::writeHDXB(uint8_t* payload, int len, uint8_t opcode)
 	}
 	else
 	{
+		if (!m_bConnected) return false;
 		//frame: 03:01:12:00:0d
 		//payload consists of 00:ff:ff:ff:ff:ff:ff:7f:7f:7f:7f:7f:7f
 		//must also accomodate acio packet of: aa:03:01:28:00:02:00:00:2e
@@ -955,6 +1020,7 @@ bool Python23IO::writeVEXTIO(uint8_t* payload, int len)
 	}
 
 
+
 	//we are now ready to transmit over Python2 IO channels...
 	uint8_t python23io_extio_message[16];
 	python23io_extio_message[0]=0xaa;
@@ -964,9 +1030,9 @@ bool Python23IO::writeVEXTIO(uint8_t* payload, int len)
 	python23io_extio_message[4]=extio_vcom_port; // actual virtual com port number to use
 	python23io_extio_message[5]=len&0xFF; //num bytes to write on the acio bus
 	memcpy( &python23io_extio_message[6],  payload, len * sizeof( uint8_t ) ); // stuff in a Python23IO wrapper
-	//LOG->Info("**************VEXTIO Python23IO LIGHT Write:");
+	LOG->Info("**************VEXTIO Python23IO LIGHT Write: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X", python23io_extio_message[0], python23io_extio_message[1], python23io_extio_message[2], python23io_extio_message[3], python23io_extio_message[4], python23io_extio_message[5], python23io_extio_message[6], python23io_extio_message[7], python23io_extio_message[8], python23io_extio_message[9], python23io_extio_message[10]);
 	WriteToBulkWithExpectedReply(python23io_extio_message, false, true);
-	
+	readVEXTIO(0x40);
 	return true;
 }
 
@@ -1047,6 +1113,7 @@ bool Python23IO::writeLights(uint8_t* payload)
 
 bool Python23IO::WriteToBulkWithExpectedReply(uint8_t* message, bool init_packet, bool output_to_log)
 {
+	if (!m_bConnected) return false;
 	//LOG->Info("Python23IO driver bulk write: Applying sequence");
 	//first figure out what our message parameters should be based on what I see here and our current sequence
 	packet_sequence++;
@@ -1076,53 +1143,6 @@ bool Python23IO::WriteToBulkWithExpectedReply(uint8_t* message, bool init_packet
 	int expected_response_size = 3; // handles packet start, length, sequence.. everything should be long than this though. Updates in the function
 
 	message_length = message[1]+2;
-
-
-
-	//**********THIS IS ALL WRONG WRONG WRONG WRONG WRONG... Well, the opcodes are right but the logic behind this is highly outdated... just only use this as a function lexicon
-	//LOG->Info("Determining message type...");
-	//LOG->Info("(%02X)",message[3]);
-
-	//may not need this except as a lexicon -- com read throws it out the window
-	/*
-	switch (message[3])
-	{
-
-
-		case 0x01: // version query
-			expected_response_size = 11;
-			break;
-
-		case 0x31: //coin query
-			expected_response_size = 9;
-			break;
-	
-		case 0x2f:// some query
-			expected_response_size = 5;
-			break;
-
-		case 0x27: //cabinet type query
-			expected_response_size = 5;
-			break;
-
-
-		case 0x24: //set light state?
-			expected_response_size = 6;
-			break;
-
-		case 0x25: //get dongle
-			expected_response_size = 45;
-			break;
-		case 0x3a: // com write
-			expected_response_size = 5; /// basically an ack
-			break;
-	
-		default:
-			expected_response_size = 5;
-	}
-	*/
-	//End horribly wrong segment
-	
 	
 	//LOG->Info("Expected response size is %d", expected_response_size);
 	//actually send our message with the parameters we determined
@@ -1178,7 +1198,7 @@ bool Python23IO::WriteToBulkWithExpectedReply(uint8_t* message, bool init_packet
 	{
 		sprintf (debug_message+(i*3), "%02X ", response[i]);
 	}
-	//if(output_to_log) LOG->Info("Full response is %d/%d bytes - %s", bulk_reply_size,response[1]+2, debug_message);
+	if(output_to_log) LOG->Info("Full response is %d/%d bytes - %s", bulk_reply_size,response[1]+2, debug_message);
 	
 
 	//if the unescaped data is too small according to the packet length byte...

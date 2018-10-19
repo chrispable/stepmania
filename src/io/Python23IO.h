@@ -63,6 +63,8 @@ public:
 	bool writeHDXB(uint8_t* payload, int len, uint8_t opcode = HDXB_SET_LIGHTS);
 	bool writeVEXTIO(uint8_t* payload, int len);
 	bool readHDXB(int len = 0x7e);
+	bool readVEXTIO(int len = 0x40);
+	
 	void HDXBAllOnTest();
 	bool nodeCount();
 	bool hasVEXTIO();

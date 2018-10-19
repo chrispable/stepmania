@@ -27,9 +27,10 @@ public:
 
 	/* if something fails, return a string describing the error */
 	virtual const char *GetError() const = 0;
+	virtual bool SetConfiguration(int iConfig) = 0;
 
 protected:
-	virtual bool SetConfiguration( int iConfig ) = 0;
+	
 
 	virtual bool ClaimInterface( int iInterface ) = 0;
 	virtual bool ReleaseInterface( int iInterface ) = 0;

@@ -27,11 +27,12 @@ public:
 
 	int InterruptRead( int iEndpoint, char *pData, int iSize, int iTimeout );
 	int InterruptWrite( int iEndpoint, char *pData, int iSize, int iTimeout );
+	bool SetConfiguration(int iConfig);
 
 	virtual const char *GetError() const;
 
 protected:
-	bool SetConfiguration( int iConfig );
+	
 
 	bool ClaimInterface( int iInterface );
 	bool ReleaseInterface( int iInterface );

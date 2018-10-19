@@ -328,6 +328,7 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 
 	if (!isP3IO && Board.hasVEXTIO()) // if p2io and has vextio
 	{
+
 		EXTIOFunction = &InputHandler_Python23IO::UpdateLightsVEXTIO;
 	}
 	else
@@ -591,11 +592,15 @@ void InputHandler_Python23IO::UpdateLightsVEXTIO()
 	if (myLights[PYTHON23IO_INDEX_PAD1R]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_RIGHT, 1);
 	if (myLights[PYTHON23IO_INDEX_PAD1U]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_UP, 1);
 	if (myLights[PYTHON23IO_INDEX_PAD1D]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_DOWN, 1);
-	if (myLights[PYTHON23IO_INDEX_PAD1L]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_LEFT, 1);
-	if (myLights[PYTHON23IO_INDEX_PAD1R]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_RIGHT, 1);
-	if (myLights[PYTHON23IO_INDEX_PAD1U]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_UP, 1);
-	if (myLights[PYTHON23IO_INDEX_PAD1D]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_DOWN, 1);
+	if (myLights[PYTHON23IO_INDEX_PAD2L]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_LEFT, 1);
+	if (myLights[PYTHON23IO_INDEX_PAD2R]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_RIGHT, 1);
+	if (myLights[PYTHON23IO_INDEX_PAD2U]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_UP, 1);
+	if (myLights[PYTHON23IO_INDEX_PAD2D]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_DOWN, 1);
 	if (myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) vextio_message[2] |= EXTIO_OUT_NEON;
+
+	vextio_message[0] |= 0x80;
+	vextio_message[3] = ((vextio_message[0] + vextio_message[1] + vextio_message[2]) & 0xFF) & 0x7F;
+	
 
 	Board.writeVEXTIO(vextio_message, 4);
 }
