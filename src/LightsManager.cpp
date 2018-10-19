@@ -437,10 +437,245 @@ void LightsManager::Update( float fDeltaTime )
 		}
 	}
 
+	//RGB support
+	//This can be massivly improved here by using different patterns based on context
+	//but for now, we mimic the DDR HD cabinet P3IO HDXB driver's implementation
+	//This requires OITG style lights otherwise white will be the only pattern generated
+	if (true)//stub -- only want to process this 60 times a second at most otherwise lights will be all white
+	{
+		m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT] ? upperCapAt(0x7F, rgb_red_bottom_count++) : lowerCapAt(0x00, rgb_red_bottom_count -= 2);
+		m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT] ? upperCapAt(0x7F, rgb_blue_bottom_count++) : lowerCapAt(0x00, rgb_blue_bottom_count -= 2);
+		m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT] ? upperCapAt(0x7F, rgb_red_top_count++) : lowerCapAt(0x00, rgb_red_top_count -= 2);
+		m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT] ? upperCapAt(0x7F, rgb_blue_top_count++) : lowerCapAt(0x00, rgb_blue_top_count -= 2);
+		m_LightsState.m_bCabinetLights[LIGHT_BASS_LEFT] ? upperCapAt(0x7F, rgb_neon_count_left += 4) : lowerCapAt(0x00, rgb_neon_count_left -= 4);
+		m_LightsState.m_bCabinetLights[LIGHT_BASS_RIGHT] ? upperCapAt(0x7F, rgb_neon_count_right += 4) : lowerCapAt(0x00, rgb_neon_count_right -= 4);
+		
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_UP_LEFT].g = rgb_neon_count_left & 0xFF;//G
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_UP_LEFT].r = rgb_red_top_count & 0xFF;//R
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_UP_LEFT].b = rgb_blue_top_count & 0xFF;//B
+
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_UP_RIGHT].g = rgb_neon_count_right & 0xFF;//G
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_UP_RIGHT].r = rgb_red_top_count & 0xFF;//R
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_UP_RIGHT].b = rgb_blue_top_count & 0xFF;//B
+
+		//these are actually the "neons" on ddr hd, we will replicate the below too
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_LR_LEFT].g = rgb_neon_count_left & 0xFF;//G
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_LR_LEFT].r = rgb_red_bottom_count & 0xFF;//R
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_LR_LEFT].b = rgb_blue_bottom_count & 0xFF;//B
+
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_LR_RIGHT].g = rgb_neon_count_right & 0xFF;//G
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_LR_RIGHT].r = rgb_red_bottom_count & 0xFF;//R
+		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_LR_RIGHT].b = rgb_blue_bottom_count & 0xFF;//B
+
+		m_LightsState.m_rgbCabinetLights[LIGHT_BASS_LEFT].g = rgb_neon_count_left & 0xFF;//G
+		m_LightsState.m_rgbCabinetLights[LIGHT_BASS_LEFT].r = rgb_red_bottom_count & 0xFF;//R
+		m_LightsState.m_rgbCabinetLights[LIGHT_BASS_LEFT].b = rgb_blue_bottom_count & 0xFF;//B
+
+		m_LightsState.m_rgbCabinetLights[LIGHT_BASS_RIGHT].g = rgb_neon_count_right & 0xFF;//G
+		m_LightsState.m_rgbCabinetLights[LIGHT_BASS_RIGHT].r = rgb_red_bottom_count & 0xFF;//R
+		m_LightsState.m_rgbCabinetLights[LIGHT_BASS_RIGHT].b = rgb_blue_bottom_count & 0xFF;//B
+
+	}
+
+
+	//spire code
+	bool p1_start = false;
+	bool p2_start = false;
+	bool ul = false;
+	bool ur = false;
+	bool ll = false;
+	bool lr = false;
+	bool neon = false;
+	bool neon_switch = false;
+
+	if (m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT]) ul = true;
+	if (m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT]) ur = true;
+	if (m_LightsState.m_bCabinetLights[LIGHT_BASS_LEFT]) neon = true;
+	if (m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT]) lr = true;
+	if (m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT]) ll = true;
+	if (m_LightsState.m_bCabinetLights[LIGHT_BASS_RIGHT]) neon = true;
+
+	if (neon != rgb_pNeon)
+	{
+		neon_switch = true;
+		rgb_neon_switch_count %= 3;
+		rgb_pNeon = neon;
+		rgb_randBase = rand() % 3;
+	}
+
+
+	if (neon)
+	{
+
+		//left
+
+		if (ul && ll)
+		{//all white
+			m_LightsState.m_rgbSpires[0].r = 0x7f;
+			m_LightsState.m_rgbSpires[0].g = 0x7f;
+			m_LightsState.m_rgbSpires[0].b = 0x7f;
+			m_LightsState.m_rgbSpires[1].r = 0x7f;
+			m_LightsState.m_rgbSpires[1].g = 0x7f;
+			m_LightsState.m_rgbSpires[1].b = 0x7f;
+			m_LightsState.m_rgbSpires[2].r = 0x7f;
+			m_LightsState.m_rgbSpires[2].g = 0x7f;
+			m_LightsState.m_rgbSpires[3].b = 0x7f;
+		}
+		if (ul && !ll)
+		{//red
+			m_LightsState.m_rgbSpires[0].r = 0x7f;
+			m_LightsState.m_rgbSpires[0].g = 0x00;
+			m_LightsState.m_rgbSpires[0].b = 0x00;
+			m_LightsState.m_rgbSpires[1].r = 0x7f;
+			m_LightsState.m_rgbSpires[1].g = 0x00;
+			m_LightsState.m_rgbSpires[1].b = 0x00;
+			m_LightsState.m_rgbSpires[2].r = 0x7f;
+			m_LightsState.m_rgbSpires[2].g = 0x00;
+			m_LightsState.m_rgbSpires[2].b = 0x00;
+		}
+		if (!ul && !ll)
+		{//blue
+			m_LightsState.m_rgbSpires[0].r = 0x00;
+			m_LightsState.m_rgbSpires[0].g = 0x00;
+			m_LightsState.m_rgbSpires[0].b = 0x7f;
+			m_LightsState.m_rgbSpires[1].r = 0x00;
+			m_LightsState.m_rgbSpires[1].g = 0x00;
+			m_LightsState.m_rgbSpires[1].b = 0x7f;
+			m_LightsState.m_rgbSpires[2].r = 0x00;
+			m_LightsState.m_rgbSpires[2].g = 0x00;
+			m_LightsState.m_rgbSpires[2].b = 0x7f;		}
+		if (!ul && ll)
+		{//green
+			m_LightsState.m_rgbSpires[0].r = 0x00;
+			m_LightsState.m_rgbSpires[0].g = 0x7f;
+			m_LightsState.m_rgbSpires[0].b = 0x00;
+			m_LightsState.m_rgbSpires[1].r = 0x00;
+			m_LightsState.m_rgbSpires[1].g = 0x7f;
+			m_LightsState.m_rgbSpires[1].b = 0x00;
+			m_LightsState.m_rgbSpires[2].r = 0x00;
+			m_LightsState.m_rgbSpires[2].g = 0x7f;
+			m_LightsState.m_rgbSpires[2].b = 0x00;
+		}
+
+
+
+		//right
+		if (ur && lr)
+		{
+			m_LightsState.m_rgbSpires[5].r = 0x7f;
+			m_LightsState.m_rgbSpires[5].g = 0x7f;
+			m_LightsState.m_rgbSpires[5].b = 0x7f;
+			m_LightsState.m_rgbSpires[6].r = 0x7f;
+			m_LightsState.m_rgbSpires[6].g = 0x7f;
+			m_LightsState.m_rgbSpires[6].b = 0x7f;
+			m_LightsState.m_rgbSpires[7].r = 0x7f;
+			m_LightsState.m_rgbSpires[7].g = 0x7f;
+			m_LightsState.m_rgbSpires[7].b = 0x7f;
+		}
+		if (ur && !lr)
+		{
+			satellite_right_color[0] = SATELLITE_R;
+			satellite_right_color[1] = SATELLITE_R;
+			satellite_right_color[2] = SATELLITE_R;
+		}
+		if (!ur && !lr)
+		{
+			satellite_right_color[0] = SATELLITE_B;
+			satellite_right_color[1] = SATELLITE_B;
+			satellite_right_color[2] = SATELLITE_B;
+		}
+		if (!ur && lr)
+		{
+			satellite_right_color[0] = SATELLITE_G;
+			satellite_right_color[1] = SATELLITE_G;
+			satellite_right_color[2] = SATELLITE_G;
+		}
+
+
+	}
+	else
+	{
+		//left
+		if (ul && ll)
+		{
+			satellite_left_color[0] = ((neon_switch_count + 0 + randBase) % 3) + 1;
+			satellite_left_color[1] = ((neon_switch_count + 1 + randBase) % 3) + 1;
+			satellite_left_color[2] = ((neon_switch_count + 2 + randBase) % 3) + 1;
+		}
+		if (ul && !ll)
+		{
+			satellite_left_color[0] = ((neon_switch_count + 1 + randBase) % 3) + 1;
+			satellite_left_color[1] = ((neon_switch_count + 2 + randBase) % 3) + 1;
+			satellite_left_color[2] = ((neon_switch_count + 3 + randBase) % 3) + 1;
+		}
+		/*if (!ul && !ll)
+		{
+		satellite_left_color[0]=((neon_switch_count+2+randBase)%3)+1;
+		satellite_left_color[1]=((neon_switch_count+3+randBase)%3)+1;
+		satellite_left_color[2]=((neon_switch_count+4+randBase)%3)+1;
+		}*/
+		if (!ul && ll)
+		{
+			satellite_left_color[0] = ((neon_switch_count + 2 + randBase) % 3) + 1;
+			satellite_left_color[1] = ((neon_switch_count + 3 + randBase) % 3) + 1;
+			satellite_left_color[2] = ((neon_switch_count + 4 + randBase) % 3) + 1;
+		}
+
+
+		//right
+
+
+		if (ur && lr)
+		{
+			satellite_right_color[0] = ((neon_switch_count + 0 + randBase) % 3) + 1;
+			satellite_right_color[1] = ((neon_switch_count + 1 + randBase) % 3) + 1;
+			satellite_right_color[2] = ((neon_switch_count + 2 + randBase) % 3) + 1;
+		}
+		if (ur && !lr)
+		{
+			satellite_right_color[0] = ((neon_switch_count + 1 + randBase) % 3) + 1;
+			satellite_right_color[1] = ((neon_switch_count + 2 + randBase) % 3) + 1;
+			satellite_right_color[2] = ((neon_switch_count + 3 + randBase) % 3) + 1;
+		}
+		/*
+		if (!ur && !lr)
+		{
+		satellite_right_color[0]=((neon_switch_count+2+randBase)%3)+1;
+		satellite_right_color[1]=((neon_switch_count+3+randBase)%3)+1;
+		satellite_right_color[2]=((neon_switch_count+4+randBase)%3)+1;
+		}
+		*/
+		if (!ur && lr)
+		{
+			satellite_right_color[0] = ((neon_switch_count + 2 + randBase) % 3) + 1;
+			satellite_right_color[1] = ((neon_switch_count + 3 + randBase) % 3) + 1;
+			satellite_right_color[2] = ((neon_switch_count + 4 + randBase) % 3) + 1;
+		}
+	}
+
+
+	if (ls.m_bGameButtonLights[GameController_1][GAME_BUTTON_START]) p1_start = true;
+	if (ls.m_bGameButtonLights[GameController_2][GAME_BUTTON_START]) p2_start = true;
+
+
 	// apply new light values we set above
 	FOREACH( LightsDriver*, m_vpDrivers, iter )
 		(*iter)->Set( &m_LightsState );
 }
+
+
+int16_t LightsManager::upperCapAt(int16_t cap, int16_t var)
+{
+	if (var > cap) return cap;
+	return var;
+}
+
+int16_t LightsManager::lowerCapAt(int16_t cap, int16_t var)
+{
+	if (var < cap) return cap;
+	return var;
+}
+
 
 void LightsManager::BlinkCabinetLight( CabinetLight cl )
 {
