@@ -868,7 +868,7 @@ bool Python23IO::openVEXTIO()
 		0x00, // @ baud
 		extio_vbaud_rate  // choose speed: ?, ?, 19200, 38400, 57600
 		};
-	LOG->Info("**************VEXTIO Python23IO OPEN: %02X %02X %02X %02X %02X %02X %02X", com_open_command[0], com_open_command[1], com_open_command[2], com_open_command[3], com_open_command[4], com_open_command[5], com_open_command[6] );
+	//LOG->Info("**************VEXTIO Python23IO OPEN: %02X %02X %02X %02X %02X %02X %02X", com_open_command[0], com_open_command[1], com_open_command[2], com_open_command[3], com_open_command[4], com_open_command[5], com_open_command[6] );
 		return WriteToBulkWithExpectedReply(com_open_command, false, true);
 
 }
@@ -928,7 +928,7 @@ bool Python23IO::readVEXTIO(int len)
 		0x40  // 7e is 126 bytes to read
 	};
 	com_read_command[5] = len & 0xFF; // plug in passed in len
-	LOG->Info("**************VEXTIO Python23IO Read command: %02X %02X %02X %02X %02X %02X", com_read_command[0], com_read_command[1], com_read_command[2], com_read_command[3], com_read_command[4], com_read_command[5]);
+	//LOG->Info("**************VEXTIO Python23IO Read command: %02X %02X %02X %02X %02X %02X", com_read_command[0], com_read_command[1], com_read_command[2], com_read_command[3], com_read_command[4], com_read_command[5]);
 	return WriteToBulkWithExpectedReply(com_read_command, false, true);
 }
 
@@ -1030,7 +1030,7 @@ bool Python23IO::writeVEXTIO(uint8_t* payload, int len)
 	python23io_extio_message[4]=extio_vcom_port; // actual virtual com port number to use
 	python23io_extio_message[5]=len&0xFF; //num bytes to write on the acio bus
 	memcpy( &python23io_extio_message[6],  payload, len * sizeof( uint8_t ) ); // stuff in a Python23IO wrapper
-	LOG->Info("**************VEXTIO Python23IO LIGHT Write: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X", python23io_extio_message[0], python23io_extio_message[1], python23io_extio_message[2], python23io_extio_message[3], python23io_extio_message[4], python23io_extio_message[5], python23io_extio_message[6], python23io_extio_message[7], python23io_extio_message[8], python23io_extio_message[9], python23io_extio_message[10]);
+	//LOG->Info("**************VEXTIO Python23IO LIGHT Write: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X", python23io_extio_message[0], python23io_extio_message[1], python23io_extio_message[2], python23io_extio_message[3], python23io_extio_message[4], python23io_extio_message[5], python23io_extio_message[6], python23io_extio_message[7], python23io_extio_message[8], python23io_extio_message[9], python23io_extio_message[10]);
 	WriteToBulkWithExpectedReply(python23io_extio_message, false, true);
 	readVEXTIO(0x40);
 	return true;
@@ -1198,7 +1198,7 @@ bool Python23IO::WriteToBulkWithExpectedReply(uint8_t* message, bool init_packet
 	{
 		sprintf (debug_message+(i*3), "%02X ", response[i]);
 	}
-	if(output_to_log) LOG->Info("Full response is %d/%d bytes - %s", bulk_reply_size,response[1]+2, debug_message);
+	//if(output_to_log) LOG->Info("Full response is %d/%d bytes - %s", bulk_reply_size,response[1]+2, debug_message);
 	
 
 	//if the unescaped data is too small according to the packet length byte...
