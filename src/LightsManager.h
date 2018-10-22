@@ -98,6 +98,8 @@ private:
 	void ChangeTestGameButtonLight( int iDir );
 	static int16_t upperCapAt(int16_t cap, int16_t var);
 	static int16_t lowerCapAt(int16_t cap, int16_t var);
+	void setRGBLightToSolid(RGBLight l, uint8_t lightColor);
+	void updateRGBLights();
 
 	float m_fSecsLeftInCabinetLightBlink[NUM_CabinetLight];
 	float m_fSecsLeftInGameButtonBlink[NUM_GameController][NUM_GameButton];
@@ -110,6 +112,7 @@ private:
 
 	int m_iQueuedCoinCounterPulses;
 	RageTimer m_CoinCounterTimer;
+	RageTimer m_RGBLightTimer;
 
 	int GetTestAutoCycleCurrentIndex() { return (int)m_fTestAutoCycleCurrentIndex; }
 
@@ -125,6 +128,12 @@ private:
 	bool rgb_pNeon = false;
 	int rgb_neon_switch_count = 0;
 	int rgb_randBase = 0;
+
+	#define RGB_X 0 //nothing
+	#define RGB_R 1 //red
+	#define RGB_G 2 //green
+	#define RGB_B 3 //blue
+	#define RGB_W 4 //white
 };
 
 extern LightsManager*	LIGHTSMAN;	// global and accessible from anywhere in our program

@@ -437,7 +437,22 @@ void LightsManager::Update( float fDeltaTime )
 		}
 	}
 
-	//RGB support
+	//RGB support -- every 1/60th of a second update the RGB lights because of the way we generate patterns
+	if (m_RGBLightTimer.Ago() >= 0.0166667f)
+	{
+		updateRGBLights();
+		m_RGBLightTimer.Touch();
+	}
+
+	
+
+	// apply new light values we set above
+	FOREACH( LightsDriver*, m_vpDrivers, iter )
+		(*iter)->Set( &m_LightsState );
+}
+
+void LightsManager::updateRGBLights()
+{
 	//This can be massivly improved here by using different patterns based on context
 	//but for now, we mimic the DDR HD cabinet P3IO HDXB driver's implementation
 	//This requires OITG style lights otherwise white will be the only pattern generated
@@ -495,13 +510,26 @@ void LightsManager::Update( float fDeltaTime )
 	if (m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT]) ll = true;
 	if (m_LightsState.m_bCabinetLights[LIGHT_BASS_RIGHT]) neon = true;
 
+	if (m_LightsState.m_bGameButtonLights[GameController_1][GAME_BUTTON_START]) p1_start = true;
+	if (m_LightsState.m_bGameButtonLights[GameController_2][GAME_BUTTON_START]) p2_start = true;
+
 	if (neon != rgb_pNeon)
 	{
 		neon_switch = true;
 		rgb_neon_switch_count %= 3;
 		rgb_pNeon = neon;
-		rgb_randBase = rand() % 3;
+		rgb_randBase = (rand() % 3) + rgb_neon_switch_count;
 	}
+
+	//init satelllite lights to off
+
+	setRGBLightToSolid(m_LightsState.m_rgbSpires[0], RGB_X);
+	setRGBLightToSolid(m_LightsState.m_rgbSpires[1], RGB_X);
+	setRGBLightToSolid(m_LightsState.m_rgbSpires[2], RGB_X);
+	setRGBLightToSolid(m_LightsState.m_rgbSpires[3], RGB_X);
+	setRGBLightToSolid(m_LightsState.m_rgbSpires[4], RGB_X);
+	setRGBLightToSolid(m_LightsState.m_rgbSpires[5], RGB_X);
+	setRGBLightToSolid(m_LightsState.m_rgbSpires[6], RGB_X);
 
 
 	if (neon)
@@ -511,50 +539,27 @@ void LightsManager::Update( float fDeltaTime )
 
 		if (ul && ll)
 		{//all white
-			m_LightsState.m_rgbSpires[0].r = 0x7f;
-			m_LightsState.m_rgbSpires[0].g = 0x7f;
-			m_LightsState.m_rgbSpires[0].b = 0x7f;
-			m_LightsState.m_rgbSpires[1].r = 0x7f;
-			m_LightsState.m_rgbSpires[1].g = 0x7f;
-			m_LightsState.m_rgbSpires[1].b = 0x7f;
-			m_LightsState.m_rgbSpires[2].r = 0x7f;
-			m_LightsState.m_rgbSpires[2].g = 0x7f;
-			m_LightsState.m_rgbSpires[3].b = 0x7f;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[0], RGB_W);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[1], RGB_W);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[2], RGB_W);
 		}
 		if (ul && !ll)
 		{//red
-			m_LightsState.m_rgbSpires[0].r = 0x7f;
-			m_LightsState.m_rgbSpires[0].g = 0x00;
-			m_LightsState.m_rgbSpires[0].b = 0x00;
-			m_LightsState.m_rgbSpires[1].r = 0x7f;
-			m_LightsState.m_rgbSpires[1].g = 0x00;
-			m_LightsState.m_rgbSpires[1].b = 0x00;
-			m_LightsState.m_rgbSpires[2].r = 0x7f;
-			m_LightsState.m_rgbSpires[2].g = 0x00;
-			m_LightsState.m_rgbSpires[2].b = 0x00;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[0], RGB_R);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[1], RGB_R);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[2], RGB_R);
 		}
 		if (!ul && !ll)
 		{//blue
-			m_LightsState.m_rgbSpires[0].r = 0x00;
-			m_LightsState.m_rgbSpires[0].g = 0x00;
-			m_LightsState.m_rgbSpires[0].b = 0x7f;
-			m_LightsState.m_rgbSpires[1].r = 0x00;
-			m_LightsState.m_rgbSpires[1].g = 0x00;
-			m_LightsState.m_rgbSpires[1].b = 0x7f;
-			m_LightsState.m_rgbSpires[2].r = 0x00;
-			m_LightsState.m_rgbSpires[2].g = 0x00;
-			m_LightsState.m_rgbSpires[2].b = 0x7f;		}
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[0], RGB_B);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[1], RGB_B);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[2], RGB_B);
+		}
 		if (!ul && ll)
 		{//green
-			m_LightsState.m_rgbSpires[0].r = 0x00;
-			m_LightsState.m_rgbSpires[0].g = 0x7f;
-			m_LightsState.m_rgbSpires[0].b = 0x00;
-			m_LightsState.m_rgbSpires[1].r = 0x00;
-			m_LightsState.m_rgbSpires[1].g = 0x7f;
-			m_LightsState.m_rgbSpires[1].b = 0x00;
-			m_LightsState.m_rgbSpires[2].r = 0x00;
-			m_LightsState.m_rgbSpires[2].g = 0x7f;
-			m_LightsState.m_rgbSpires[2].b = 0x00;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[0], RGB_G);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[1], RGB_G);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[2], RGB_G);
 		}
 
 
@@ -562,33 +567,27 @@ void LightsManager::Update( float fDeltaTime )
 		//right
 		if (ur && lr)
 		{
-			m_LightsState.m_rgbSpires[5].r = 0x7f;
-			m_LightsState.m_rgbSpires[5].g = 0x7f;
-			m_LightsState.m_rgbSpires[5].b = 0x7f;
-			m_LightsState.m_rgbSpires[6].r = 0x7f;
-			m_LightsState.m_rgbSpires[6].g = 0x7f;
-			m_LightsState.m_rgbSpires[6].b = 0x7f;
-			m_LightsState.m_rgbSpires[7].r = 0x7f;
-			m_LightsState.m_rgbSpires[7].g = 0x7f;
-			m_LightsState.m_rgbSpires[7].b = 0x7f;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[4], RGB_W);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[5], RGB_W);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[6], RGB_W);
 		}
 		if (ur && !lr)
 		{
-			satellite_right_color[0] = SATELLITE_R;
-			satellite_right_color[1] = SATELLITE_R;
-			satellite_right_color[2] = SATELLITE_R;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[4], RGB_R);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[5], RGB_R);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[6], RGB_R);
 		}
 		if (!ur && !lr)
 		{
-			satellite_right_color[0] = SATELLITE_B;
-			satellite_right_color[1] = SATELLITE_B;
-			satellite_right_color[2] = SATELLITE_B;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[4], RGB_B);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[5], RGB_B);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[6], RGB_B);
 		}
 		if (!ur && lr)
 		{
-			satellite_right_color[0] = SATELLITE_G;
-			satellite_right_color[1] = SATELLITE_G;
-			satellite_right_color[2] = SATELLITE_G;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[4], RGB_G);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[5], RGB_G);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[6], RGB_G);
 		}
 
 
@@ -598,27 +597,21 @@ void LightsManager::Update( float fDeltaTime )
 		//left
 		if (ul && ll)
 		{
-			satellite_left_color[0] = ((neon_switch_count + 0 + randBase) % 3) + 1;
-			satellite_left_color[1] = ((neon_switch_count + 1 + randBase) % 3) + 1;
-			satellite_left_color[2] = ((neon_switch_count + 2 + randBase) % 3) + 1;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[0], ((0 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[1], ((1 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[2], ((2 + rgb_randBase) % 3) + 1);
 		}
 		if (ul && !ll)
 		{
-			satellite_left_color[0] = ((neon_switch_count + 1 + randBase) % 3) + 1;
-			satellite_left_color[1] = ((neon_switch_count + 2 + randBase) % 3) + 1;
-			satellite_left_color[2] = ((neon_switch_count + 3 + randBase) % 3) + 1;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[0], ((1 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[1], ((2 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[2], ((3 + rgb_randBase) % 3) + 1);
 		}
-		/*if (!ul && !ll)
-		{
-		satellite_left_color[0]=((neon_switch_count+2+randBase)%3)+1;
-		satellite_left_color[1]=((neon_switch_count+3+randBase)%3)+1;
-		satellite_left_color[2]=((neon_switch_count+4+randBase)%3)+1;
-		}*/
 		if (!ul && ll)
 		{
-			satellite_left_color[0] = ((neon_switch_count + 2 + randBase) % 3) + 1;
-			satellite_left_color[1] = ((neon_switch_count + 3 + randBase) % 3) + 1;
-			satellite_left_color[2] = ((neon_switch_count + 4 + randBase) % 3) + 1;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[0], ((2 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[1], ((3 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[2], ((4 + rgb_randBase) % 3) + 1);
 		}
 
 
@@ -627,41 +620,95 @@ void LightsManager::Update( float fDeltaTime )
 
 		if (ur && lr)
 		{
-			satellite_right_color[0] = ((neon_switch_count + 0 + randBase) % 3) + 1;
-			satellite_right_color[1] = ((neon_switch_count + 1 + randBase) % 3) + 1;
-			satellite_right_color[2] = ((neon_switch_count + 2 + randBase) % 3) + 1;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[5], ((0 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[6], ((1 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[7], ((2 + rgb_randBase) % 3) + 1);
 		}
 		if (ur && !lr)
 		{
-			satellite_right_color[0] = ((neon_switch_count + 1 + randBase) % 3) + 1;
-			satellite_right_color[1] = ((neon_switch_count + 2 + randBase) % 3) + 1;
-			satellite_right_color[2] = ((neon_switch_count + 3 + randBase) % 3) + 1;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[5], ((1 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[6], ((2 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[7], ((3 + rgb_randBase) % 3) + 1);
 		}
-		/*
-		if (!ur && !lr)
-		{
-		satellite_right_color[0]=((neon_switch_count+2+randBase)%3)+1;
-		satellite_right_color[1]=((neon_switch_count+3+randBase)%3)+1;
-		satellite_right_color[2]=((neon_switch_count+4+randBase)%3)+1;
-		}
-		*/
 		if (!ur && lr)
 		{
-			satellite_right_color[0] = ((neon_switch_count + 2 + randBase) % 3) + 1;
-			satellite_right_color[1] = ((neon_switch_count + 3 + randBase) % 3) + 1;
-			satellite_right_color[2] = ((neon_switch_count + 4 + randBase) % 3) + 1;
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[5], ((2 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[6], ((3 + rgb_randBase) % 3) + 1);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[7], ((4 + rgb_randBase) % 3) + 1);
+		}
+	}
+
+	if (p1_start)
+	{
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[0], RGB_B);
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[1], RGB_B);
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[2], RGB_B);
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[3], RGB_R);
+
+		if (!p2_start)
+		{
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[4], RGB_G);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[5], RGB_G);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[6], RGB_G);
 		}
 	}
 
 
-	if (ls.m_bGameButtonLights[GameController_1][GAME_BUTTON_START]) p1_start = true;
-	if (ls.m_bGameButtonLights[GameController_2][GAME_BUTTON_START]) p2_start = true;
 
+	if (p2_start)
+	{
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[4], RGB_B);
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[5], RGB_B);
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[6], RGB_B);
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[3], RGB_B);
 
-	// apply new light values we set above
-	FOREACH( LightsDriver*, m_vpDrivers, iter )
-		(*iter)->Set( &m_LightsState );
+		if (!p1_start)
+		{
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[0], RGB_G);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[1], RGB_G);
+			setRGBLightToSolid(m_LightsState.m_rgbSpires[2], RGB_G);
+		}
+	}
+
+	if (p1_start&&p2_start)
+	{
+		setRGBLightToSolid(m_LightsState.m_rgbSpires[3], RGB_G);
+	}
+
 }
+
+void LightsManager::setRGBLightToSolid(RGBLight l, uint8_t lightColor)
+{
+	switch (lightColor)
+	{
+	case RGB_R:
+		l.r = 0x7F;
+		l.g =0x00;
+		l.b = 0x00;
+		break;
+	case RGB_G:
+		l.r = 0x00;
+		l.g = 0x7F;
+		l.b = 0x00;
+		break;
+	case RGB_B:
+		l.r = 0x00;
+		l.g = 0x00;
+		l.b = 0x7f;
+		break;
+	case RGB_W:
+		l.r = 0x7F;
+		l.g = 0x7F;
+		l.b = 0x7f;
+		break;
+	default:
+		l.r = 0x00;
+		l.g = 0x00;
+		l.b = 0x00;
+		break;
+	}
+}
+
 
 
 int16_t LightsManager::upperCapAt(int16_t cap, int16_t var)
