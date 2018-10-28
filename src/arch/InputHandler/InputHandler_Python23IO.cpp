@@ -348,11 +348,15 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 
 		for (i = 0; i < 8; i++)
 		{
-			if (myLights[i] != previousLights[i]) cabinetLightsUpdated = true;
+			if (myLights[i] != previousLights[i]){
+				cabinetLightsUpdated = true; break;
+			}
 		}
 		for (i = 6; i < 16; i++)
 		{
-			if (myLights[i] != previousLights[i]) extioLightsUpdated = true;
+			if (myLights[i] != previousLights[i]){
+				extioLightsUpdated = true; break;
+			}
 		}
 
 		if (cabinetLightsUpdated)
