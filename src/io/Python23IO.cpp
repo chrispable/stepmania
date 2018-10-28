@@ -25,7 +25,6 @@ uint8_t Python23IO::pchunk[3][4];
 PSTRING Python23IO::m_sInputError;
 int Python23IO::m_iInputErrorCount = 0;
 uint8_t Python23IO::packet_sequence = 0;
-uint8_t Python23IO::packets_since_keepalive = 0;
 
 //these get changed for p2io but they are correct for p3io
 uint8_t Python23IO::hdxb_vcom_port = 0x00;//p3io setting
@@ -82,10 +81,6 @@ bool Python23IO::Open()
 
 	//init previous lights
 	int i=0;
-	for (i = 0; i < 5; i++);
-	{
-		p_light_payload[i] = 0;
-	}
 
 	if (m_iP2IO_HDXB_DEV_ID.Get()>0 && m_iP2IO_HDXB_DEV_ID.Get() < 255)
 	{
@@ -139,9 +134,9 @@ bool Python23IO::Open()
 			if (OpenInternal(python3io_VENDOR_ID[i], python3io_PRODUCT_ID[i]))
 			{
 				LOG->Info("Python23IO P3IO Driver:: Connected to index %d", i);
+				m_bConnected = true;
 				LOG->Info("init Python23IO P3IO watch dog ");
 				InitHDAndWatchDog();
-				m_bConnected = true;
 			}
 		}
 	}
@@ -161,8 +156,15 @@ bool Python23IO::Open()
 	{
 		openHDXB();
 		usleep(906250); //capture waits this long
+	}
+	if (!board_isP2IO)
+	{
 		sendUnknownCommand();
-		FlushBulkReadBuffer();
+	}
+	FlushBulkReadBuffer();
+
+	if (board_hasHDXB)
+	{
 		baud_pass = spamBaudCheck();
 
 		// say the baud check passed anyway
@@ -383,7 +385,7 @@ bool Python23IO::interruptRead(uint8_t* dataToQueue)
 
 bool Python23IO::sendUnknownCommand()
 {
-	if (COM4SET) return true;
+	//if (COM4SET) return true;
 	uint8_t unknown[] = {
 	0xaa,
 	0x04,
@@ -392,7 +394,7 @@ bool Python23IO::sendUnknownCommand()
 	0x01,
 	0x00
 	};
-	//LOG->Info("**************HDXB UNKNOWN COMMAND:");
+	LOG->Info("**************HDXB UNKNOWN COMMAND:");
 	return WriteToBulkWithExpectedReply( unknown, false, true);
 }
 
@@ -410,7 +412,7 @@ if (COM4SET)
 			0x10,//opcode
 			0x00,
 			0x00,
-			0x14//CHECKSUM
+			0x11 + hdxb_dev_id//CHECKSUM 
 		};
 		com4.write(hdxb_ping_command,7);
 		usleep(36000); // 36 ms wait
@@ -431,7 +433,7 @@ if (COM4SET)
 			0x10,//opcode
 			0x00,
 			0x00,
-			0x14//CHECKSUM
+			0x11 + hdxb_dev_id//CHECKSUM 
 		};
 		//LOG->Info("**************HDXB Python23IO PING:");
 		WriteToBulkWithExpectedReply(hdxb_ping_command, false, true);
@@ -446,7 +448,7 @@ bool Python23IO::spamBaudCheck()
 	bool found_baud=false;
 	if (COM4SET)
 	{
-		//LOG->Info("**************HDXB Serial BAUD Routine:");
+		LOG->Info("**************HDXB Serial BAUD Routine:");
 		found_baud= ACIO::baudCheck(com4);
 	}
 	else
@@ -463,13 +465,13 @@ bool Python23IO::spamBaudCheck()
 
 		for (int i=0;i<50;i++)
 		{
-			//LOG->Info("**************HDXB Python23IO BAUD:");
+			LOG->Info("**************HDXB Python23IO BAUD:");
 			WriteToBulkWithExpectedReply(com_baud_command, false, true);
 			readHDXB(0x40);
 			if (bulk_reply_size>=16 && python23io_response[1]==0x0F && python23io_response[4]==0x0B &&  python23io_response[5]==0xAA && python23io_response[6]==0xAA && python23io_response[7]==0xAA && python23io_response[8]==0xAA && python23io_response[9]==0xAA && python23io_response[10]==0xAA && python23io_response[11]==0xAA && python23io_response[12]==0xAA && python23io_response[13]==0xAA && python23io_response[14]==0xAA && python23io_response[15]==0xAA)
 			{
 			
-				//LOG->Info("**************HDXB Python23IO GOT BAUD RATE! Flushing...");
+				LOG->Info("**************HDXB Python23IO GOT BAUD RATE! Flushing...");
 				readHDXB(0x40); // now flush it
 			
 				readHDXB(0x40); // now flush it
@@ -500,7 +502,7 @@ bool Python23IO::nodeCount()
 	{
 		// 00    00    01    00    PP    07    CC -- 01 is the command for enumeration, PP is 01 (payload length), 07 is the payload with a reply of 7 in it, CC is checksum
 		uint8_t nodes[]={0xaa,0x0e,0x01,0x3a,hdxb_vcom_port,0x08,0xaa,0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x02}; 
-		//LOG->Info("**************HDXB Python23IO Get Node Count:");
+		LOG->Info("**************HDXB Python23IO Get Node Count:");
 		WriteToBulkWithExpectedReply(nodes, false, true);
 		readHDXB(0x40);
 		return readHDXB(0x40); // now flush it
@@ -536,22 +538,23 @@ bool Python23IO::getVersion()
 			0x02,//OPCODE
 			0x00,
 			0x00,
-			0x05,
+			2 + hdxb_dev_id,
+			//0x05,
 		};
-		//LOG->Info("**************ICCB1 Serial Get Version:");
+		LOG->Info("**************ICCB1 Serial Get Version:");
 
 		com4.write(ICCB_1,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
-		//LOG->Info("**************ICCB2 Serial Get Version:");
+		LOG->Info("**************ICCB2 Serial Get Version:");
 		com4.write(ICCB_2,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
-		//LOG->Info("**************HDXB Serial Get Version:");
+		LOG->Info("**************HDXB Serial Get Version:");
 		com4.write(HDXB,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
@@ -605,20 +608,20 @@ bool Python23IO::getVersion()
 			0x02,//OPCODE
 			0x00,
 			0x00,
-			0x05,
+			0x02 + hdxb_dev_id,
 		};
 		if (hdxb_dev_id > 2)
 		{
-			//LOG->Info("**************ICCB1 Python23IO Get Version:");
+			LOG->Info("**************ICCB1 Python23IO Get Version:");
 			WriteToBulkWithExpectedReply(ICCB_1, false, true);
 			readHDXB(0x7e);
 			readHDXB(0x7e);
-			//LOG->Info("**************ICCB2 Python23IO Get Version:");
+			LOG->Info("**************ICCB2 Python23IO Get Version:");
 			WriteToBulkWithExpectedReply(ICCB_2, false, true);
 			readHDXB(0x7e);
 			readHDXB(0x7e);
 		}
-		//LOG->Info("**************HDXB Python23IO Get Version:");
+		LOG->Info("**************HDXB Python23IO Get Version:");
 		WriteToBulkWithExpectedReply(HDXB, false, true);
 		readHDXB(0x7e);
 		return readHDXB(0x7e);
@@ -638,21 +641,22 @@ bool Python23IO::initHDXB2()
 			0x03,//OPCODE
 			0x00,
 			0x00,
-			0x06,
+			3 + hdxb_dev_id,
+			//0x06,
 		};
 
 		uint8_t ICCB1_op3[]={0xaa,0x01,0x00,0x03,0x00,0x00,0x04};
 		uint8_t ICCB2_op3[]={0xaa,0x02,0x00,0x03,0x00,0x00,0x05};
 	
-		//LOG->Info("**************ICCB1 Serial INIT mode 3:");
+		LOG->Info("**************ICCB1 Serial INIT mode 3:");
 		com4.write(ICCB1_op3,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
-		//LOG->Info("**************ICCB2 Serial INIT mode 3:");
+		LOG->Info("**************ICCB2 Serial INIT mode 3:");
 		com4.write(ICCB2_op3,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
-		//LOG->Info("**************HDXB Serial INIT mode 3:");
+		LOG->Info("**************HDXB Serial INIT mode 3:");
 		com4.write(hdxb_op3,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
@@ -678,19 +682,20 @@ bool Python23IO::initHDXB2()
 			0x03,//OPCODE
 			0x00,
 			0x00,
-			0x06,
+			3 + hdxb_dev_id
+			//0x06,
 		};
 
 		uint8_t ICCB1_op3[]={0xaa,0x0d,0x02,0x3a,hdxb_vcom_port,0x07,0xaa,0x01,0x00,0x03,0x00,0x00,0x04};
 		uint8_t ICCB2_op3[]={0xaa,0x0d,0x03,0x3a,hdxb_vcom_port,0x07,0xaa,0x02,0x00,0x03,0x00,0x00,0x05};
 	
-		//LOG->Info("**************ICCB1 Python23IO INIT mode 3:");
+		LOG->Info("**************ICCB1 Python23IO INIT mode 3:");
 		WriteToBulkWithExpectedReply(ICCB1_op3, false, true);
 		readHDXB(0x7e);
-		//LOG->Info("**************ICCB2 Python23IO INIT mode 3:");
+		LOG->Info("**************ICCB2 Python23IO INIT mode 3:");
 		WriteToBulkWithExpectedReply(ICCB2_op3, false, true);
 		readHDXB(0x7e);
-		//LOG->Info("**************HDXB Python23IO INIT mode 3:");
+		LOG->Info("**************HDXB Python23IO INIT mode 3:");
 		WriteToBulkWithExpectedReply(hdxb_op3, false, true);
 		readHDXB(0x7e);
 		return readHDXB(0x7e); // now flush it according to captures
@@ -710,24 +715,25 @@ bool Python23IO::initHDXB3()
 			0x00,//OPCODE
 			0x00,
 			0x00,
-			0x04,
+			1+hdxb_dev_id,
+			//0x04,
 		};
 		uint8_t iccb1_type[]={0xaa,0x01,0x01,0x00,0x00,0x00,0x02};
 		uint8_t iccb2_type[]={0xaa,0x02,0x01,0x00,0x00,0x00,0x03};
 	
-		//LOG->Info("**************ICCB1 Serial INIT type 0:");
+		LOG->Info("**************ICCB1 Serial INIT type 0:");
 		com4.write(iccb1_type,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
-		//LOG->Info("**************ICCB2 Serial  INIT type 0:");
+		LOG->Info("**************ICCB2 Serial  INIT type 0:");
 		com4.write(iccb2_type,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
-		//LOG->Info("**************HDXB Serial  INIT type 0:");
+		LOG->Info("**************HDXB Serial  INIT type 0:");
 		com4.write(hdxb_type,7);
 		usleep(36000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
@@ -752,20 +758,21 @@ bool Python23IO::initHDXB3()
 			0x00,//OPCODE
 			0x00,
 			0x00,
-			0x04,
+			1 + hdxb_dev_id
+			//0x04,
 		};
 		uint8_t iccb1_type[]={0xaa,0x0b,0x0a,0x3a,hdxb_vcom_port,0x07,0xaa,0x01,0x01,0x00,0x00,0x00,0x02};
 		uint8_t iccb2_type[]={0xaa,0x0b,0x0e,0x3a,hdxb_vcom_port,0x07,0xaa,0x02,0x01,0x00,0x00,0x00,0x03};
 	
-		//LOG->Info("**************ICCB1 Python23IO INIT type 0:");
+		LOG->Info("**************ICCB1 Python23IO INIT type 0:");
 		WriteToBulkWithExpectedReply(iccb1_type, false, true);
 		readHDXB(0x7e);
 		readHDXB(0x7e); // now flush it according to captures
-		//LOG->Info("**************ICCB2 Python23IO INIT type 0:");
+		LOG->Info("**************ICCB2 Python23IO INIT type 0:");
 		WriteToBulkWithExpectedReply(iccb2_type, false, true);
 		readHDXB(0x7e);
 		readHDXB(0x7e); // now flush it according to captures
-		//LOG->Info("**************HDXB Python23IO INIT type 0:");
+		LOG->Info("**************HDXB Python23IO INIT type 0:");
 		WriteToBulkWithExpectedReply(hdxb_type, false, true);
 		readHDXB(0x7e);
 		return readHDXB(0x7e); // now flush it according to captures
@@ -787,9 +794,9 @@ bool Python23IO::initHDXB4()
 			0x02,
 			0x00,
 			0x00,
-			0x2e
+			0x2b + hdxb_dev_id
 		};
-		//LOG->Info("**************HDXB Serial INIT4:");
+		LOG->Info("**************HDXB Serial INIT4:");
 		com4.write(breath_of_life,9);
 		usleep(72000); // 36 ms wait
 		ACIO::read_acio_packet(com4,acio_response);
@@ -813,9 +820,9 @@ bool Python23IO::initHDXB4()
 			0x02,
 			0x00,
 			0x00,
-			0x2e
+			0x2b + hdxb_dev_id
 		};
-		//LOG->Info("**************HDXB Python23IO INIT4:");
+		LOG->Info("**************HDXB Python23IO INIT4:");
 		return WriteToBulkWithExpectedReply(breath_of_life, false, true);
 		//We are NOT reading because the capture says we don't at this point!
 	}
@@ -879,7 +886,7 @@ bool Python23IO::openHDXB()
 	{
 		com4.open();
 		com4.setBaudrate(38400);
-		//LOG->Info("**************HDXB SERIAL OPEN:");
+		LOG->Info("**************HDXB SERIAL OPEN:");
 		return true;
 	}
 	else
@@ -895,7 +902,7 @@ bool Python23IO::openHDXB()
 		0x00, // @ baud
 		hxdb_vbaud_rate  // choose speed: ?, ?, 19200, 38400, 57600
 		};
-		//LOG->Info("**************HDXB Python23IO OPEN:");
+		LOG->Info("**************HDXB Python23IO OPEN:");
 		return WriteToBulkWithExpectedReply(com_open_command, false, true);
 	}
 }
@@ -912,7 +919,7 @@ bool Python23IO::readHDXB(int len)
 		0x7e  // 7e is 126 bytes to read
 	};
 	com_read_command[5]=len&0xFF; // plug in passed in len
-	//LOG->Info("**************HDXB Python23IO Read:");
+	LOG->Info("**************HDXB Python23IO Read:");
 	return WriteToBulkWithExpectedReply(com_read_command, false, true);
 }
 
@@ -1043,70 +1050,43 @@ bool Python23IO::hasVEXTIO()
 
 bool Python23IO::writeLightsP2IO(uint8_t* payload)
 {
-	packets_since_keepalive++;
-
+	
 	//if not connected do nothing
 	if (!m_bConnected)
 	{
-		//LOG->Info("Python23IO io driver is in disconnected state! Not doing anything in write lights!");
+		LOG->Info("Python23IO io driver is in disconnected state! Not doing anything in write lights!");
 		return false;
 	}
 
-	//arbitrary keep alive signal. maybe can dial this back? send one every 6 attempts
-	//lights are CONSTANTLY sending in this architecture
-	packets_since_keepalive %= 6;
 	
+	
+	//make a light message
+	uint8_t light_message[] = { 0xaa, 0x04, 0x00, 0x24, payload[0], ~payload[1] };
+	//LOG->Info("Python23IO driver Sending P2IO light message: %02X %02X %02X %02X %02X %02X", light_message[0],light_message[1],light_message[2],light_message[3],light_message[4],light_message[5]);
 
-	
-	//compare last payload with this payload -- prevent useless chatter on USB so input has best poll rate
-	if ( (memcmp(p_light_payload, payload, sizeof(payload))!=0) || (packets_since_keepalive == 0) )
-	{	//if they dont match...
-		
-		//copy new payload to previous payload so I can check it next round
-		memcpy(p_light_payload, payload, sizeof(payload));
-	
-		//make a light message
-		uint8_t light_message[] = { 0xaa, 0x04, 0x00, 0x24, payload[0], ~payload[1] };
-		//LOG->Info("Python23IO driver Sending P2IO light message: %02X %02X %02X %02X %02X %02X", light_message[0],light_message[1],light_message[2],light_message[3],light_message[4],light_message[5]);
-
-		//send message
-		return WriteToBulkWithExpectedReply(light_message, false);
-	}
-	return true;
+	//send message
+	return WriteToBulkWithExpectedReply(light_message, false);
 }
 
 bool Python23IO::writeLights(uint8_t* payload)
 {
-	packets_since_keepalive++;
+	//packets_since_keepalive++;
 
 	//if not connected do nothing
 	if (!m_bConnected)
 	{
-		//LOG->Info("Python23IO io driver is in disconnected state! Not doing anything in write lights!");
+		LOG->Info("Python23IO io driver is in disconnected state! Not doing anything in write lights!");
 		return false;
 	}
 
-	//arbitrary keep alive signal. maybe can dial this back? send one every 6 attempts
-	//lights are CONSTANTLY sending in this architecture
-	packets_since_keepalive %= 6;
 	
+	//make a light message
+	uint8_t light_message[] = { 0xaa, 0x07, 0x00, 0x24, ~payload[4], payload[3], payload[2], payload[1], payload[0] };
+	//LOG->Info("Python23IO driver Sending light message: %02X %02X %02X %02X %02X %02X %02X %02X %02X", light_message[0],light_message[1],light_message[2],light_message[3],light_message[4],light_message[5],light_message[6],light_message[7],light_message[8]);
 
-	
-	//compare last payload with this payload -- prevent useless chatter on USB so input has best poll rate
-	if ( (memcmp(p_light_payload, payload, sizeof(payload))!=0) || (packets_since_keepalive == 0) )
-	{	//if they dont match...
-		
-		//copy new payload to previous payload so I can check it next round
-		memcpy(p_light_payload, payload, sizeof(payload));
-	
-		//make a light message
-		uint8_t light_message[] = { 0xaa, 0x07, 0x00, 0x24, ~payload[4], payload[3], payload[2], payload[1], payload[0] };
-		//LOG->Info("Python23IO driver Sending light message: %02X %02X %02X %02X %02X %02X %02X %02X %02X", light_message[0],light_message[1],light_message[2],light_message[3],light_message[4],light_message[5],light_message[6],light_message[7],light_message[8]);
+	//send message
+	return WriteToBulkWithExpectedReply(light_message, false);
 
-		//send message
-		return WriteToBulkWithExpectedReply(light_message, false);
-	}
-	return true;
 }
 
 
@@ -1114,6 +1094,7 @@ bool Python23IO::writeLights(uint8_t* payload)
 bool Python23IO::WriteToBulkWithExpectedReply(uint8_t* message, bool init_packet, bool output_to_log)
 {
 	if (!m_bConnected) return false;
+
 	//LOG->Info("Python23IO driver bulk write: Applying sequence");
 	//first figure out what our message parameters should be based on what I see here and our current sequence
 	packet_sequence++;

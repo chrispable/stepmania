@@ -90,7 +90,6 @@ private:
 	static uint8_t python23io_response[256];
 	static uint8_t pchunk[3][4];
 	char debug_message[2048];
-	uint8_t p_light_payload[5];// = { 0, 0, 0, 0, 0 };
 	static serial::Serial com4;
 	bool baud_pass;//  = false;
 	bool hdxb_ready;// = false;
@@ -101,7 +100,6 @@ private:
 	bool COM4SET=false;
 	static int bulk_reply_size;// = 0;
 	static uint8_t packet_sequence;
-	static uint8_t packets_since_keepalive;
 	static const int REQ_TIMEOUT = 1000;
 	static uint8_t hdxb_vcom_port;// = 0x00;
 	static uint8_t hxdb_vbaud_rate;// = 0x03; //this is 2 on p2io

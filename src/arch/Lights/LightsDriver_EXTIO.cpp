@@ -26,8 +26,6 @@ computer, in the case of a Python3IO.
 */
 
 //stepmania constructs
-RageMutex LightsDriver_EXTIO::m_Lock( "LightsDriver_EXTIO");
-LightsState LightsDriver_EXTIO::m_State;
 bool LightsDriver_EXTIO::s_bInitialized = false;
 bool LightsDriver_EXTIO::lightsUpdated = true;
 bool LightsDriver_EXTIO::m_bShutdown = false;
@@ -38,7 +36,10 @@ serial::Timeout LightsDriver_EXTIO::serial_timeout = serial::Timeout::simpleTime
 uint8_t LightsDriver_EXTIO::extio_message[] = { 0, 0, 0, 0 };
 
 
-
+void LightsDriver_EXTIO::Set(const LightsState *ls)
+{
+	//blank this out
+}
 
 
 LightsDriver_EXTIO::LightsDriver_EXTIO()
@@ -82,16 +83,16 @@ LightsDriver_EXTIO::~LightsDriver_EXTIO()
 void LightsDriver_EXTIO::UpdateLightsEXTIO()
 {
 	//itg lights are DUMB AS FUCK, you can fix this by setting BlinkGameplayButtonLightsOnNote=0 in static.ini
-	if (!AreLightsUpdated()) return; // no update packet
-	memset(extio_message, 0, 4 * sizeof(uint8_t));// zero out the message
 
-	//lock read/write access to the lights while we write them out
-	m_Lock.Lock();
-
-	//we may haev gotten an update packet but pad lights may not have changed
+	//we may have gotten an update packet but pad lights may not have changed
 	if (!memcmp(myLights, previousLights, sizeof(myLights))) {
 		return;
 	}
+
+	memcpy(previousLights, myLights, sizeof(myLights)); //save current lights as previous lights
+
+	memset(extio_message, 0, 4 * sizeof(uint8_t));// zero out the message
+
 	
 	//stuff for the extio
 	if (myLights[0]) ExtioSetPlayerPanel(PLAYER_1, EXTIO_OUT_LEFT, 1);
@@ -103,8 +104,7 @@ void LightsDriver_EXTIO::UpdateLightsEXTIO()
 	if (myLights[6]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_UP, 1);
 	if (myLights[7]) ExtioSetPlayerPanel(PLAYER_2, EXTIO_OUT_DOWN, 1);
 	if (myLights[8] || myLights[9]) extio_message[2] |= EXTIO_OUT_NEON;
-	m_Lock.Unlock();
-
+	//LOG->Info("EXTIO: write EXTIO packets");
 	WriteExtioPacket();
 }
 
@@ -119,7 +119,9 @@ void LightsDriver_EXTIO::EXTIOThreadMain()
 
 	while (!m_bShutdown)
 	{
-		//LOG->Info("EXTIO: EXTIO PING");
+		//LOG->Info("EXTIO: EXTIO POLL");
+		UpdateLightsPoll();
+		//LOG->Info("EXTIO: EXTIO UPDATE");
 		UpdateLightsEXTIO();
 		usleep(16666); //60 times per sec
 
@@ -201,16 +203,13 @@ int LightsDriver_EXTIO::EXTIOThread_Start(void *p)
 	return 0;
 }
 
-void LightsDriver_EXTIO::Set(const LightsState *ls)
+void LightsDriver_EXTIO::UpdateLightsPoll()
 {
-	LightsState l= *ls;
-	m_Lock.Lock();
-	memcpy(&previousLights, myLights, sizeof(myLights));
-	lightsUpdated=true;
-
+	memset(myLights, false, sizeof(myLights));// zero out the message
 
 	//stuff for the extio
 #ifdef PRODUCT_ID_BARE
+	LightsState l = LightsDriver_Export::GetState();
 	if (l.m_bGameButtonLights[GameController_1][DANCE_BUTTON_LEFT])		myLights[0] = true;
 	if (l.m_bGameButtonLights[GameController_1][DANCE_BUTTON_RIGHT])	myLights[1] = true;
 	if (l.m_bGameButtonLights[GameController_1][DANCE_BUTTON_UP])		myLights[2] = true;
@@ -220,6 +219,7 @@ void LightsDriver_EXTIO::Set(const LightsState *ls)
 	if (l.m_bGameButtonLights[GameController_2][DANCE_BUTTON_UP])		myLights[6] = true;
 	if (l.m_bGameButtonLights[GameController_2][DANCE_BUTTON_DOWN])		myLights[7] = true;
 #else
+	const LightsState *ls = LightsDriver_External::Get();
 	if (l.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_LEFT])	myLights[0] = true;
 	if (l.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_RIGHT])	myLights[1] = true;
 	if (l.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_UP])		myLights[2] = true;
@@ -231,15 +231,5 @@ void LightsDriver_EXTIO::Set(const LightsState *ls)
 #endif
 	if (l.m_bCabinetLights[LIGHT_BASS_LEFT])							myLights[8] = true;
 	if (l.m_bCabinetLights[LIGHT_BASS_RIGHT])							myLights[9] = true;
-	m_Lock.Unlock();
 }
 
-bool LightsDriver_EXTIO::AreLightsUpdated()
-{
-	bool ret;
-	m_Lock.Lock();
-	ret=lightsUpdated;
-	lightsUpdated = false;
-	m_Lock.Unlock();
-	return ret;
-}

@@ -340,16 +340,24 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 	bool cabinetLightsUpdated = false;
 	bool extioLightsUpdated = false;
 	int i = 0;
+	uint8_t packets_since_keepalive = 0;
 	while (!m_bShutdown)
 	{
+		packets_since_keepalive++;
+		packets_since_keepalive %= 6;
 		cabinetLightsUpdated = false;
 		extioLightsUpdated = false;
-		GetCurrentLightsState();
+		if (packets_since_keepalive == 0) cabinetLightsUpdated = true;//force an update
 
-		for (i = 0; i < 8; i++)
+		GetCurrentLightsState();
+		if (!cabinetLightsUpdated)
 		{
-			if (myLights[i] != previousLights[i]){
-				cabinetLightsUpdated = true; break;
+
+			for (i = 0; i < 8; i++)
+			{
+				if (myLights[i] != previousLights[i]){
+					cabinetLightsUpdated = true; break;
+				}
 			}
 		}
 		for (i = 6; i < 16; i++)
@@ -359,6 +367,7 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 			}
 		}
 
+		
 		if (cabinetLightsUpdated)
 		{
 			(*this.*cabinetFunction)();
