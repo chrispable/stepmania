@@ -15,6 +15,7 @@
 Bookkeeper*	BOOKKEEPER = NULL;	// global and accessible from anywhere in our program
 
 static const RString COINS_DAT = "Save/Coins.xml";
+static Preference<int> pCoinRecoveryExpirationHours("CoinRecoveryExpirationHours", 0);
 
 Bookkeeper::Bookkeeper()
 {
@@ -161,15 +162,32 @@ void Bookkeeper::CoinInserted()
 void Bookkeeper::WriteCoinsFile( int coins )
 {
     IniFile ini;
+	time_t seconds = time(NULL);
+	RString ts_val=ssprintf("%ld", (long)seconds);
+	
     ini.SetValue( "Bookkeeping", "Coins", coins);
+	ini.SetValue("Bookkeeping", "CoinsSavedAt", ts_val);
     ini.WriteFile( SpecialFiles::COINS_INI );
 }
 
-void Bookkeeper::ReadCoinsFile( int &coins )
+void Bookkeeper::ReadCoinsFile(int &coins)
 {
-    IniFile ini;
-    ini.ReadFile( SpecialFiles::COINS_INI );
-    ini.GetValue( "Bookkeeping", "Coins", coins);
+	RString secondsWhenSaved;
+	int CoinExpiryHours = abs(pCoinRecoveryExpirationHours.Get());
+	long secParsed;
+	long secondsNow = (long)time(NULL);
+	IniFile ini;
+	ini.ReadFile(SpecialFiles::COINS_INI);
+	ini.GetValue("Bookkeeping", "CoinsSavedAt", secondsWhenSaved);
+	sscanf(secondsWhenSaved.c_str(), "%ld", &secParsed);
+	long secondsDiff = abs(secondsNow - secParsed);
+
+	//only restore coins if the expiry hour is 0 or we have a time difference of CoinExpiryHours hours
+	if (CoinExpiryHours == 0 || (secondsDiff < 60 * 60 * CoinExpiryHours))
+	{
+		ini.GetValue("Bookkeeping", "Coins", coins);
+	}
+	
 }
 
 // Return the number of coins between [beginning,ending).
