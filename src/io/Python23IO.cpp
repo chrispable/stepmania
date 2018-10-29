@@ -125,6 +125,8 @@ bool Python23IO::Open()
 				FlushBulkReadBuffer();
 			}
 		}
+		if (!m_bConnected) return false;
+
 	}
 	else
 	{
@@ -139,6 +141,7 @@ bool Python23IO::Open()
 				InitHDAndWatchDog();
 			}
 		}
+		if (!m_bConnected) return false;
 	}
 
 	if (board_isP2IO)
