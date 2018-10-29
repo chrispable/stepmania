@@ -981,7 +981,7 @@ bool Python23IO::writeHDXB(uint8_t* payload, int len, uint8_t opcode)
 	}
 	else
 	{
-		if (!m_bConnected) return false;
+		//if (!m_bConnected) return false;
 		//frame: 03:01:12:00:0d
 		//payload consists of 00:ff:ff:ff:ff:ff:ff:7f:7f:7f:7f:7f:7f
 		//must also accomodate acio packet of: aa:03:01:28:00:02:00:00:2e
@@ -1013,9 +1013,9 @@ bool Python23IO::writeHDXB(uint8_t* payload, int len, uint8_t opcode)
 		python23io_acio_message[4]=hdxb_vcom_port; // actual virtual com port number to use
 		python23io_acio_message[5]=len&0xFF; //num bytes to write on the acio bus
 		memcpy( &python23io_acio_message[6],  python23io_request, len * sizeof( uint8_t ) ); // stuff in a Python23IO wrapper
-		//LOG->Info("**************HDXB Python23IO LIGHT Write:");
+		LOG->Info("**************HDXB Python23IO LIGHT Write:");
 		WriteToBulkWithExpectedReply(python23io_acio_message, false, true);
-		//LOG->Info("**************HDXB Python23IO Get Ping:");
+		LOG->Info("**************HDXB Python23IO Get Ping:");
 	
 	}
 	return pingHDXB();
@@ -1096,7 +1096,8 @@ bool Python23IO::writeLights(uint8_t* payload)
 
 bool Python23IO::WriteToBulkWithExpectedReply(uint8_t* message, bool init_packet, bool output_to_log)
 {
-	if (!m_bConnected) return false;
+	//if (!m_bConnected) return false;
+
 
 	//LOG->Info("Python23IO driver bulk write: Applying sequence");
 	//first figure out what our message parameters should be based on what I see here and our current sequence
