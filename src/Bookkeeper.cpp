@@ -15,7 +15,7 @@
 Bookkeeper*	BOOKKEEPER = NULL;	// global and accessible from anywhere in our program
 
 static const RString COINS_DAT = "Save/Coins.xml";
-static Preference<int> pCoinRecoveryExpirationHours("CoinRecoveryExpirationHours", 0);
+static Preference<int> p_iCoinRecoveryExpirationHours("CoinRecoveryExpirationHours", 0);
 
 Bookkeeper::Bookkeeper()
 {
@@ -173,7 +173,7 @@ void Bookkeeper::WriteCoinsFile( int coins )
 void Bookkeeper::ReadCoinsFile(int &coins)
 {
 	RString secondsWhenSaved;
-	int CoinExpiryHours = abs(pCoinRecoveryExpirationHours.Get());
+	int CoinExpiryHours = abs(p_iCoinRecoveryExpirationHours.Get());
 	long secParsed;
 	long secondsNow = (long)time(NULL);
 	IniFile ini;
