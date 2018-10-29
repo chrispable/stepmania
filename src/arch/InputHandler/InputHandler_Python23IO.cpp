@@ -296,7 +296,7 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 	void (InputHandler_Python23IO::*cabinetFunction)();
 	void (InputHandler_Python23IO::*EXTIOFunction)();
 	void (InputHandler_Python23IO::*HDXBFunction)();
-
+	int lightsFuncs = 1;
 	if (isP3IO)
 	{
 		if (HDCabinetLayout)
@@ -316,6 +316,7 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 	if (hasHDXB)
 	{
 		HDXBFunction = &InputHandler_Python23IO::UpdateLightsHDXB;
+		lightsFuncs++;
 	}
 	else
 	{
@@ -326,6 +327,7 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 	{
 
 		EXTIOFunction = &InputHandler_Python23IO::UpdateLightsVEXTIO;
+		lightsFuncs ++ ;
 	}
 	else
 	{
@@ -338,6 +340,7 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 	blue_bottom_count=0;
 	neon_count=0;
 	bool cabinetLightsUpdated = false;
+	bool hdxbUpdated = true;
 	bool extioLightsUpdated = false;
 	int i = 0;
 	uint8_t packets_since_keepalive = 0;
@@ -371,11 +374,12 @@ void InputHandler_Python23IO::USBBulkThreadMain()
 		if (cabinetLightsUpdated)
 		{
 			(*this.*cabinetFunction)();
-			(*this.*HDXBFunction)();
+			
 		}
+		if (hdxbUpdated)(*this.*HDXBFunction)();//always update hdxb
 		if (extioLightsUpdated)(*this.*EXTIOFunction)();
 
-		usleep(16666); //hack until I thread this better? trying to limit lights to 60fps
+		usleep(((16666)*1) / (1*(lightsFuncs))); //hack until I thread this better? trying to limit lights to 60fps
 	}
 }
 
@@ -638,25 +642,12 @@ void InputHandler_Python23IO::UpdateLightsHDXB()
 	uint8_t hdxb[]={0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	
-	myLights[PYTHON23IO_INDEX_P2D] ? upperCapAt(0x7F,red_bottom_count++) : lowerCapAt(0x00,red_bottom_count-=2);
-	myLights[PYTHON23IO_INDEX_P2U] ? upperCapAt(0x7F,blue_bottom_count++) : lowerCapAt(0x00,blue_bottom_count-=2);
-	myLights[PYTHON23IO_INDEX_P1D] ? upperCapAt(0x7F,red_top_count++) : lowerCapAt(0x00,red_top_count-=2);
-	myLights[PYTHON23IO_INDEX_P1U] ? upperCapAt(0x7F,blue_top_count++) : lowerCapAt(0x00,blue_top_count-=2);
-	(myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) ? upperCapAt(0x7F,neon_count+=4) : lowerCapAt(0x00,neon_count-=4);
-	if (myLights[PYTHON23IO_INDEX_P1S])
-	{
-		hdxb[1] |= 0x80;
-		hdxb[1] |= 0x80; //magic wand, make my speaker RED!
-		hdxb[2] |= 0x80;
-		hdxb[3] |= 0x80;
-	}
-	if(myLights[PYTHON23IO_INDEX_P2S])
-	{
-		hdxb[4] |= 0x80;
-		hdxb[4] |= 0x80; //magic wand, make my speaker RED!
-		hdxb[5] |= 0x80;
-		hdxb[6] |= 0x80;
-	}
+	myLights[PYTHON23IO_INDEX_P2D] ? upperCapAt(0x7F,red_bottom_count++) : lowerCapAt(0x00,red_bottom_count-=4);
+	myLights[PYTHON23IO_INDEX_P2U] ? upperCapAt(0x7F,blue_bottom_count++) : lowerCapAt(0x00,blue_bottom_count-=4);
+	myLights[PYTHON23IO_INDEX_P1D] ? upperCapAt(0x7F,red_top_count++) : lowerCapAt(0x00,red_top_count-=4);
+	myLights[PYTHON23IO_INDEX_P1U] ? upperCapAt(0x7F,blue_top_count++) : lowerCapAt(0x00,blue_top_count-=4);
+	(myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) ? upperCapAt(0x7F,neon_count+=2) : lowerCapAt(0x00,neon_count-=8);
+
 
 	
 	//order of speaker lights is GRB:: P1 Upper, p1 lower, P2 upper, P2 lower
@@ -680,8 +671,22 @@ void InputHandler_Python23IO::UpdateLightsHDXB()
 	hdxb[10]|=neon_count&0xFF;//G
 	hdxb[11]|=red_bottom_count&0xFF;//R
 	hdxb[12]|=blue_bottom_count&0xFF;//B
+
+	//light button panels if needed
+	if (myLights[PYTHON23IO_INDEX_P1S])
+	{
+		hdxb[1] |= 0x80;
+		hdxb[2] |= 0x80;
+		hdxb[3] |= 0x80;
+	}
+	if (myLights[PYTHON23IO_INDEX_P2S])
+	{
+		hdxb[4] |= 0x80; 
+		hdxb[5] |= 0x80;
+		hdxb[6] |= 0x80;
+	}
+
 	Board.writeHDXB(hdxb,0xd);
-	//now do speakers and button panel
 }
 
 int16_t InputHandler_Python23IO::upperCapAt(int16_t cap,int16_t var)
