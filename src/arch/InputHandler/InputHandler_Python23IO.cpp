@@ -642,11 +642,11 @@ void InputHandler_Python23IO::UpdateLightsHDXB()
 	uint8_t hdxb[]={0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	
-	myLights[PYTHON23IO_INDEX_P2D] ? upperCapAt(0x7F,red_bottom_count++) : lowerCapAt(0x00,red_bottom_count-=4);
-	myLights[PYTHON23IO_INDEX_P2U] ? upperCapAt(0x7F,blue_bottom_count++) : lowerCapAt(0x00,blue_bottom_count-=4);
-	myLights[PYTHON23IO_INDEX_P1D] ? upperCapAt(0x7F,red_top_count++) : lowerCapAt(0x00,red_top_count-=4);
-	myLights[PYTHON23IO_INDEX_P1U] ? upperCapAt(0x7F,blue_top_count++) : lowerCapAt(0x00,blue_top_count-=4);
-	(myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) ? upperCapAt(0x7F,neon_count+=2) : lowerCapAt(0x00,neon_count-=8);
+	red_bottom_count=myLights[PYTHON23IO_INDEX_P2D] ? upperCapAt(0x7F, red_bottom_count++) : lowerCapAt(0x00, red_bottom_count -= 4);
+	blue_bottom_count=myLights[PYTHON23IO_INDEX_P2U] ? upperCapAt(0x7F, blue_bottom_count++) : lowerCapAt(0x00, blue_bottom_count -= 4);
+	red_top_count=myLights[PYTHON23IO_INDEX_P1D] ? upperCapAt(0x7F, red_top_count++) : lowerCapAt(0x00, red_top_count -= 4);
+	blue_top_count=myLights[PYTHON23IO_INDEX_P1U] ? upperCapAt(0x7F, blue_top_count++) : lowerCapAt(0x00, blue_top_count -= 4);
+	neon_count=(myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) ? upperCapAt(0x7F, neon_count += 2) : lowerCapAt(0x00, neon_count -= 8);
 
 
 	
@@ -656,21 +656,21 @@ void InputHandler_Python23IO::UpdateLightsHDXB()
 	//what is the mysterious byte 0? el byto mysteriouso~~
 	hdxb[0]=0;//?
 	//p1 up:
-	hdxb[1]|=neon_count&0xFF;//G
-	hdxb[2]|=red_top_count&0xFF;//R
-	hdxb[3]|=blue_top_count&0xFF;//B
+	hdxb[1]=neon_count&0xFF;//G
+	hdxb[2]=red_top_count&0xFF;//R
+	hdxb[3]=blue_top_count&0xFF;//B
 	//p2 up:
-	hdxb[4]|=neon_count&0xFF;//G
-	hdxb[5]|=red_top_count&0xFF;//R
-	hdxb[6]|=blue_top_count&0xFF;//B
+	hdxb[4]=neon_count&0xFF;//G
+	hdxb[5]=red_top_count&0xFF;//R
+	hdxb[6]=blue_top_count&0xFF;//B
 	//p1 down
-	hdxb[7]|=neon_count&0xFF;//G
-	hdxb[8]|=red_bottom_count&0xFF;//R
-	hdxb[9]|=blue_bottom_count&0xFF;//B
+	hdxb[7]=neon_count&0xFF;//G
+	hdxb[8]=red_bottom_count&0xFF;//R
+	hdxb[9]=blue_bottom_count&0xFF;//B
 	//p2 down
-	hdxb[10]|=neon_count&0xFF;//G
-	hdxb[11]|=red_bottom_count&0xFF;//R
-	hdxb[12]|=blue_bottom_count&0xFF;//B
+	hdxb[10]=neon_count&0xFF;//G
+	hdxb[11]=red_bottom_count&0xFF;//R
+	hdxb[12]=blue_bottom_count&0xFF;//B
 
 	//light button panels if needed
 	if (myLights[PYTHON23IO_INDEX_P1S])

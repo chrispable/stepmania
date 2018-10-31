@@ -458,12 +458,12 @@ void LightsManager::updateRGBLights()
 	//This requires OITG style lights otherwise white will be the only pattern generated
 	if (true)//stub -- only want to process this 60 times a second at most otherwise lights will be all white
 	{
-		m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT] ? upperCapAt(0x7F, rgb_red_bottom_count++) : lowerCapAt(0x00, rgb_red_bottom_count -= 2);
-		m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT] ? upperCapAt(0x7F, rgb_blue_bottom_count++) : lowerCapAt(0x00, rgb_blue_bottom_count -= 2);
-		m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT] ? upperCapAt(0x7F, rgb_red_top_count++) : lowerCapAt(0x00, rgb_red_top_count -= 2);
-		m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT] ? upperCapAt(0x7F, rgb_blue_top_count++) : lowerCapAt(0x00, rgb_blue_top_count -= 2);
-		m_LightsState.m_bCabinetLights[LIGHT_BASS_LEFT] ? upperCapAt(0x7F, rgb_neon_count_left += 4) : lowerCapAt(0x00, rgb_neon_count_left -= 4);
-		m_LightsState.m_bCabinetLights[LIGHT_BASS_RIGHT] ? upperCapAt(0x7F, rgb_neon_count_right += 4) : lowerCapAt(0x00, rgb_neon_count_right -= 4);
+		rgb_red_bottom_count=m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT] ? upperCapAt(0x7F, rgb_red_bottom_count++) : lowerCapAt(0x00, rgb_red_bottom_count -= 2);
+		rgb_blue_bottom_count=m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT] ? upperCapAt(0x7F, rgb_blue_bottom_count++) : lowerCapAt(0x00, rgb_blue_bottom_count -= 2);
+		rgb_red_top_count=m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT] ? upperCapAt(0x7F, rgb_red_top_count++) : lowerCapAt(0x00, rgb_red_top_count -= 2);
+		rgb_blue_top_count=m_LightsState.m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT] ? upperCapAt(0x7F, rgb_blue_top_count++) : lowerCapAt(0x00, rgb_blue_top_count -= 2);
+		rgb_neon_count_left=m_LightsState.m_bCabinetLights[LIGHT_BASS_LEFT] ? upperCapAt(0x7F, rgb_neon_count_left += 4) : lowerCapAt(0x00, rgb_neon_count_left -= 4);
+		rgb_neon_count_right=m_LightsState.m_bCabinetLights[LIGHT_BASS_RIGHT] ? upperCapAt(0x7F, rgb_neon_count_right += 4) : lowerCapAt(0x00, rgb_neon_count_right -= 4);
 		
 		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_UP_LEFT].g = rgb_neon_count_left & 0xFF;//G
 		m_LightsState.m_rgbCabinetLights[LIGHT_MARQUEE_UP_LEFT].r = rgb_red_top_count & 0xFF;//R
