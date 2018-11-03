@@ -495,16 +495,16 @@ void InputHandler_Python23IO::GetCurrentLightsState()
 	
 	const LightsState *ls = LightsDriver_External::Get();
 	//i am convinced the actual button lights are controlled over serial on HD cabinets
-	if (ls->m_bCabinetLights[LIGHT_BUTTONS_LEFT]) myLights[INDEX_P1S] = true;
-	if (ls->m_bCabinetLights[LIGHT_BUTTONS_RIGHT]) myLights[INDEX_P2S] = true;
+	if (ls->m_bCabinetLights[LIGHT_BUTTONS_LEFT]) myLights[PYTHON23IO_INDEX_P1S] = true;
+	if (ls->m_bCabinetLights[LIGHT_BUTTONS_RIGHT]) myLights[PYTHON23IO_INDEX_P2S] = true;
 
 	//the following do not control the spotlights in HD mode... see above.. other lights are over serial COM2, see extio lights driver
-	if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT])  myLights[INDEX_P2D] = true;
-	if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT]) myLights[INDEX_P2U] = true;
-	if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT]) myLights[INDEX_P1D] = true;
-	if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT])  myLights[INDEX_P1U] = true;
-	if (ls->m_bCabinetLights[LIGHT_BASS_LEFT]) myLights[INDEX_P1N] = true;
-	if (ls->m_bCabinetLights[LIGHT_BASS_RIGHT]) myLights[INDEX_P2N] = true;
+	if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_RIGHT])  myLights[PYTHON23IO_INDEX_P2D] = true;
+	if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_RIGHT]) myLights[PYTHON23IO_INDEX_P2U] = true;
+	if (ls->m_bCabinetLights[LIGHT_MARQUEE_LR_LEFT]) myLights[PYTHON23IO_INDEX_P1D] = true;
+	if (ls->m_bCabinetLights[LIGHT_MARQUEE_UP_LEFT])  myLights[PYTHON23IO_INDEX_P1U] = true;
+	if (ls->m_bCabinetLights[LIGHT_BASS_LEFT]) myLights[PYTHON23IO_INDEX_P1N] = true;
+	if (ls->m_bCabinetLights[LIGHT_BASS_RIGHT]) myLights[PYTHON23IO_INDEX_P2N] = true;
 	if (ls.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_LEFT])	myLights[PYTHON23IO_INDEX_PAD1L] = true;
 	if (ls.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_RIGHT])	myLights[PYTHON23IO_INDEX_PAD1R] = true;
 	if (ls.m_bGameButtonLights[GAME_CONTROLLER_1][DANCE_BUTTON_UP])		myLights[PYTHON23IO_INDEX_PAD1U] = true;
