@@ -141,8 +141,7 @@ bool Python23IO::Open()
 				InitHDAndWatchDog();
 			}
 		}
-		m_bConnected = true;
-		//if (!m_bConnected) return false;
+		if (!m_bConnected) return false;
 	}
 
 	if (board_isP2IO)
@@ -1165,13 +1164,13 @@ bool Python23IO::WriteToBulkWithExpectedReply(uint8_t* message, bool init_packet
 	}
 	//if(output_to_log) LOG->Info("Send %d bytes - %s", bytes_to_write, debug_message);
 
-	//int iResult = m_pDriver->BulkWrite(bulk_write_to_ep, (char*)message2, bytes_to_write, REQ_TIMEOUT);
-	int iResult = bytes_to_write;
+	int iResult = m_pDriver->BulkWrite(bulk_write_to_ep, (char*)message2, bytes_to_write, REQ_TIMEOUT);
+
 	if (iResult != bytes_to_write)
 	{
 		LOG->Info("Python23IO message to send was truncated. Sent %d/%d bytes", iResult,bytes_to_write);
 	}
-	return true;
+
 	//get ready for the response
 	//LOG->Info("Asking for reply...");
 	iResult = GetResponseFromBulk(response, expected_response_size, output_to_log); //do a potentially fragmented read
