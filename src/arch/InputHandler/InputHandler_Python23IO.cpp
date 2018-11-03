@@ -642,12 +642,15 @@ void InputHandler_Python23IO::UpdateLightsHDXB()
 	uint8_t hdxb[]={0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 	
-	red_bottom_count=myLights[PYTHON23IO_INDEX_P2D] ? upperCapAt(0x7F, red_bottom_count++) : lowerCapAt(0x00, red_bottom_count -= 4);
-	blue_bottom_count=myLights[PYTHON23IO_INDEX_P2U] ? upperCapAt(0x7F, blue_bottom_count++) : lowerCapAt(0x00, blue_bottom_count -= 4);
-	red_top_count=myLights[PYTHON23IO_INDEX_P1D] ? upperCapAt(0x7F, red_top_count++) : lowerCapAt(0x00, red_top_count -= 4);
-	blue_top_count=myLights[PYTHON23IO_INDEX_P1U] ? upperCapAt(0x7F, blue_top_count++) : lowerCapAt(0x00, blue_top_count -= 4);
-	neon_count=(myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) ? upperCapAt(0x7F, neon_count += 2) : lowerCapAt(0x00, neon_count -= 8);
-
+	red_bottom_count=myLights[PYTHON23IO_INDEX_P2D] ? upperCapAt(0x7F, red_bottom_count+2) : lowerCapAt(0x00, red_bottom_count - 1);
+	blue_bottom_count=myLights[PYTHON23IO_INDEX_P2U] ? upperCapAt(0x7F, blue_bottom_count+2) : lowerCapAt(0x00, blue_bottom_count - 1);
+	red_top_count=myLights[PYTHON23IO_INDEX_P1D] ? upperCapAt(0x7F, red_top_count+2) : lowerCapAt(0x00, red_top_count - 1);
+	blue_top_count=myLights[PYTHON23IO_INDEX_P1U] ? upperCapAt(0x7F, blue_top_count+2) : lowerCapAt(0x00, blue_top_count - 1);
+	neon_count=(myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) ? upperCapAt(0x7F, neon_count + 2) : lowerCapAt(0x00, neon_count - 4);
+	
+	if (myLights[PYTHON23IO_INDEX_P1U]) LOG->Info("DEBUG: Blue top count incremented!");
+	if (myLights[PYTHON23IO_INDEX_P2U]) LOG->Info("DEBUG: Blue bottom count incremented!");
+	if (myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) LOG->Info("DEBUG: neon count incremented!");
 
 	
 	//order of speaker lights is GRB:: P1 Upper, p1 lower, P2 upper, P2 lower
