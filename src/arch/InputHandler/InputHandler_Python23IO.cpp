@@ -648,11 +648,6 @@ void InputHandler_Python23IO::UpdateLightsHDXB()
 	blue_top_count=myLights[PYTHON23IO_INDEX_P1U] ? upperCapAt(0x7F, blue_top_count+2) : lowerCapAt(0x00, blue_top_count - 1);
 	neon_count=(myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) ? upperCapAt(0x7F, neon_count + 2) : lowerCapAt(0x00, neon_count - 4);
 	
-	if (myLights[PYTHON23IO_INDEX_P1U]) LOG->Info("DEBUG: Blue top count incremented!");
-	if (myLights[PYTHON23IO_INDEX_P2U]) LOG->Info("DEBUG: Blue bottom count incremented!");
-	if (myLights[PYTHON23IO_INDEX_P1N] || myLights[PYTHON23IO_INDEX_P2N]) LOG->Info("DEBUG: neon count incremented!");
-
-	
 	//order of speaker lights is GRB:: P1 Upper, p1 lower, P2 upper, P2 lower
 	//actually may be rgb....
 

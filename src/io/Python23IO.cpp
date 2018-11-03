@@ -922,7 +922,7 @@ bool Python23IO::readHDXB(int len)
 		0x7e  // 7e is 126 bytes to read
 	};
 	com_read_command[5]=len&0xFF; // plug in passed in len
-	LOG->Info("**************HDXB Python23IO Read:");
+	//LOG->Info("**************HDXB Python23IO Read:");
 	return WriteToBulkWithExpectedReply(com_read_command, false, true);
 }
 
