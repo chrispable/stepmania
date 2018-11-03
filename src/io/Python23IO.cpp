@@ -223,7 +223,6 @@ void Python23IO::HDXBAllOnTest()
 //someone smarter than me make this better please
 bool Python23IO::interruptRead(uint8_t* dataToQueue)
 {
-	return true;
 	m_iInputErrorCount = 0;
 	int iExpected = 16; //end point size says max packet of 16, but with libusb1 I only ever got 12 in chunks of 4 every consequtive read
 	uint8_t chunk[4][4] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -1164,7 +1163,7 @@ bool Python23IO::WriteToBulkWithExpectedReply(uint8_t* message, bool init_packet
 	{
 		sprintf (debug_message+(i*3), "%02X ", message2[i]);
 	}
-	if(output_to_log) LOG->Info("Send %d bytes - %s", bytes_to_write, debug_message);
+	//if(output_to_log) LOG->Info("Send %d bytes - %s", bytes_to_write, debug_message);
 
 	//int iResult = m_pDriver->BulkWrite(bulk_write_to_ep, (char*)message2, bytes_to_write, REQ_TIMEOUT);
 	int iResult = bytes_to_write;
@@ -1469,5 +1468,5 @@ void Python23IO::FlushBulkReadBuffer()
 	uint8_t response3[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 						   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	LOG->Info("Python23IO Flushing Read buffer. Expect it to give up");
-	//bulk_reply_size=GetResponseFromBulk(response3, 3, true); //do a potentially fragmented read
+	bulk_reply_size=GetResponseFromBulk(response3, 3, true); //do a potentially fragmented read
 }
